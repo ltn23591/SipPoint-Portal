@@ -2,12 +2,10 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link } from "react-router";
-import { Loader2, LogIn, Mail, Lock } from "lucide-react";
+import { Loader2, LogIn, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
@@ -23,21 +21,17 @@ import {
 } from "@/components/ui/input-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
-import { ROUTE_PATH } from "@/constants/routePaths";
+import { CODE_KEY } from "@/constants/application";
 
 const schema = z.object({
-  email: z
-    .string()
-    .min(1, "Vui lòng nhập email")
-    .email("Email không hợp lệ"),
-  password: z
-    .string()
-    .min(6, "Mật khẩu tối thiểu 6 ký tự"),
+  email: z.string().min(1, "Vui lòng nhập email").email("Email không hợp lệ"),
+  password: z.string().min(6, "Mật khẩu tối thiểu 6 ký tự"),
   remember: z.boolean().optional(),
 });
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
 
   const form = useForm({
@@ -48,21 +42,30 @@ export default function Login() {
   const onSubmit = async (values) => {
     setLoading(true);
     try {
-      // TODO: replace with AuthenticationApi.login(values) when backend is available
+      // TODO: thay bằng AuthenticationApi.login(values) khi có backend.
+      // Response kỳ vọng: { data: { user, accessToken, refreshToken } }
       await new Promise((resolve) => setTimeout(resolve, 600));
       const mockUser = {
-        id: "u-001",
-        name: "Admin SipPoint",
+        _id: "665f1a2b3c4d5e6f7a8b0001",
+        fullName: "Admin SipPoint",
         email: values.email,
-        role: "admin",
+        role: "ADMIN",
       };
-      const mockToken = "demo-token-" + Math.random().toString(36).slice(2);
-      login({ user: mockUser, token: mockToken });
+      login({
+        user: mockUser,
+        token: "demo-access-" + Math.random().toString(36).slice(2),
+        refreshToken: "demo-refresh-" + Math.random().toString(36).slice(2),
+      });
       toast.success("Đăng nhập thành công");
     } catch (err) {
-      toast.error(
-        err?.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại."
-      );
+      const status = err?.response?.status;
+      if (status === CODE_KEY.BAD_REQUEST) {
+        toast.error("Thông tin không hợp lệ. Vui lòng kiểm tra lại.");
+      } else if (status === CODE_KEY.UNAUTHORIZED_STATUS) {
+        toast.error("Sai email hoặc mật khẩu.");
+      } else {
+        toast.error(err?.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại.");
+      }
     } finally {
       setLoading(false);
     }
@@ -71,18 +74,14 @@ export default function Login() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h2 className="text-2xl font-bold text-secondary">Đăng nhập</h2>
+        <h2 className="text-xl font-bold text-secondary">Đăng nhập</h2>
         <p className="text-sm text-muted-foreground">
-          Chào mừng quay trở lại! Vui lòng đăng nhập để tiếp tục.
+          Nhập thông tin tài khoản để truy cập hệ thống.
         </p>
       </div>
 
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-4"
-          noValidate
-        >
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <FormField
             control={form.control}
             name="email"
@@ -118,11 +117,21 @@ export default function Login() {
                       <Lock className="size-4" />
                     </InputGroupAddon>
                     <InputGroupInput
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       autoComplete="current-password"
                       {...field}
                     />
+                    <InputGroupAddon align="inline-end">
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      </button>
+                    </InputGroupAddon>
                   </InputGroup>
                 </FormControl>
                 <FormMessage />
@@ -135,7 +144,7 @@ export default function Login() {
               control={form.control}
               name="remember"
               render={({ field }) => (
-                <label className="flex cursor-pointer items-center gap-2 text-muted-foreground">
+                <label className="flex cursor-pointer items-center gap-2 text-muted-foreground select-none">
                   <Checkbox
                     checked={!!field.value}
                     onCheckedChange={field.onChange}
@@ -144,9 +153,13 @@ export default function Login() {
                 </label>
               )}
             />
-            <a href="#" className="font-medium text-primary hover:underline">
+            <button
+              type="button"
+              onClick={() => toast.info("Vui lòng liên hệ quản trị viên để đặt lại mật khẩu.")}
+              className="font-medium text-primary hover:underline"
+            >
               Quên mật khẩu?
-            </a>
+            </button>
           </div>
 
           <Button
@@ -164,16 +177,6 @@ export default function Login() {
           </Button>
         </form>
       </Form>
-
-      <p className="text-center text-sm text-muted-foreground">
-        Chưa có tài khoản?{" "}
-        <Link
-          to={ROUTE_PATH.SIGNUP}
-          className="font-semibold text-primary hover:underline"
-        >
-          Đăng ký ngay
-        </Link>
-      </p>
     </div>
   );
 }

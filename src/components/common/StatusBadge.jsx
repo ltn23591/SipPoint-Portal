@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import {
   ORDER_STATUS,
   ORDER_STATUS_LABEL,
-} from "@/constants/enums";
+} from "@/constants/application";
 
 const STATUS_STYLE = {
   [ORDER_STATUS.PENDING]:
@@ -11,7 +11,9 @@ const STATUS_STYLE = {
   [ORDER_STATUS.CONFIRMED]:
     "bg-info/15 text-info border border-info/30",
   [ORDER_STATUS.PREPARING]:
-    "bg-secondary/15 text-secondary border border-secondary/30",
+    "bg-info/15 text-info border border-info/30",
+  [ORDER_STATUS.READY]:
+    "bg-success/15 text-success border border-success/30",
   [ORDER_STATUS.COMPLETED]:
     "bg-success/15 text-success border border-success/30",
   [ORDER_STATUS.CANCELLED]:

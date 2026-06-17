@@ -9,10 +9,6 @@ export const AuthenticationApi = {
     const endpoint = `/api/v1/authen/portal/login`;
     return apiCall(API_METHOD.POST, endpoint, payload);
   },
-  signup: (payload) => {
-    const endpoint = `/api/v1/authen/portal/signup`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
   logout: () => {
     const endpoint = `/api/v1/authen/portal/logout`;
     return apiCall(API_METHOD.POST, endpoint);
@@ -552,72 +548,6 @@ export const PromotionProgramApi = {
   },
   approve: (payload) => {
     const endpoint = `/api/v1/promotion-program/approve`;
-    return apiCall(API_METHOD.PATCH, endpoint, payload);
-  },
-};
-
-export const BannerApi = {
-  create: (payload) => {
-    const endpoint = `/api/v1/banner/create`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  update: (payload) => {
-    const endpoint = `/api/v1/banner/update`;
-    return apiCall(API_METHOD.PUT, endpoint, payload);
-  },
-  delete: (id) => {
-    const endpoint = `/api/v1/banner/delete/${id}`;
-    return apiCall(API_METHOD.DELETE, endpoint);
-  },
-  detail: (id) => {
-    const endpoint = `/api/v1/banner/detail/${id}`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  search: (payload) => {
-    const endpoint = `/api/v1/banner/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  searchWithPagination: (payload, signal) => {
-    const endpoint = `/api/v1/banner/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload, null, null, { signal }).then((res) => {
-      return preProcessData(res, payload?.pageSize);
-    });
-  },
-  updateActive: (payload) => {
-    const endpoint = `/api/v1/banner/update-active`;
-    return apiCall(API_METHOD.PATCH, endpoint, payload);
-  },
-};
-
-export const NewsFeedApi = {
-  search: (payload) => {
-    const endpoint = `/api/v1/news-feed/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  searchWithPagination: (payload, signal) => {
-    const endpoint = `/api/v1/news-feed/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload, null, null, { signal }).then((res) => {
-      return preProcessData(res, payload?.pageSize);
-    });
-  },
-  create: (payload) => {
-    const endpoint = `/api/v1/news-feed/create`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  update: (payload) => {
-    const endpoint = `/api/v1/news-feed/update`;
-    return apiCall(API_METHOD.PUT, endpoint, payload);
-  },
-  delete: (id) => {
-    const endpoint = `/api/v1/news-feed/delete/${id}`;
-    return apiCall(API_METHOD.DELETE, endpoint);
-  },
-  getDetailById: (id) => {
-    const endpoint = `/api/v1/news-feed/details/${id}`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  updateActive: (payload) => {
-    const endpoint = `/api/v1/news-feed/update-active`;
     return apiCall(API_METHOD.PATCH, endpoint, payload);
   },
 };

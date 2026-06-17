@@ -1,0 +1,47 @@
+import { PROMO_TYPE } from "./constants";
+
+// _id là ObjectId; code là string nghiệp vụ.
+export const MOCK_PROMOTIONS = [
+  {
+    _id: "665f20000000000000af0001",
+    code: "HE2024",
+    name: "Giảm hè 20%",
+    type: PROMO_TYPE.PERCENT,
+    value: 20,
+    maxDiscount: 30000,
+    minOrder: 50000,
+    startAt: "2026-06-01T00:00:00.000Z",
+    endAt: "2026-08-31T23:59:59.000Z",
+    usageLimit: 1000,
+    perCustomerLimit: 2,
+    status: "ACTIVE",
+  },
+  {
+    _id: "665f20000000000000af0002",
+    code: "GIAM10K",
+    name: "Giảm 10K cho đơn từ 30K",
+    type: PROMO_TYPE.FIXED,
+    value: 10000,
+    maxDiscount: 10000,
+    minOrder: 30000,
+    startAt: "2026-05-01T00:00:00.000Z",
+    endAt: "2026-12-31T23:59:59.000Z",
+    usageLimit: 500,
+    perCustomerLimit: 1,
+    status: "ACTIVE",
+  },
+  {
+    _id: "665f20000000000000af0003",
+    code: "WELCOME15",
+    name: "Chào mừng khách mới -15%",
+    type: PROMO_TYPE.PERCENT,
+    value: 15,
+    maxDiscount: 25000,
+    minOrder: 0,
+    startAt: "2026-01-01T00:00:00.000Z",
+    endAt: "2026-03-31T23:59:59.000Z",
+    usageLimit: 2000,
+    perCustomerLimit: 1,
+    status: "EXPIRED",
+  },
+];

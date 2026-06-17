@@ -12,8 +12,9 @@ export function useAuth() {
   const loginStore = useAuthStore((state) => state.login);
   const logoutStore = useAuthStore((state) => state.logout);
 
-  const login = ({ user, token }) => {
+  const login = ({ user, token, refreshToken }) => {
     storage.set(STORAGE_KEY.ACCESS_TOKEN, token);
+    if (refreshToken) storage.set(STORAGE_KEY.REFRESH_TOKEN, refreshToken);
     loginStore({ user, token });
     navigate(ROUTE_PATH.DASHBOARD, { replace: true });
   };

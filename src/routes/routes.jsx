@@ -7,10 +7,21 @@ import { PublicRoute } from "./PublicRoute";
 import { ROUTE_PATH } from "@/constants/routePaths";
 
 import Login from "@/pages/auth/Login";
-import Signup from "@/pages/auth/Signup";
 import Dashboard from "@/pages/dashboard/Dashboard";
 import Orders from "@/pages/orders/Orders";
+import OrderEditor from "@/pages/orders/OrderEditor";
 import Menu from "@/pages/menu/Menu";
+import MenuDetail from "@/pages/menu/MenuDetail";
+import Inventory from "@/pages/inventory/Inventory";
+import InventoryDetail from "@/pages/inventory/InventoryDetail";
+import Promotions from "@/pages/promotions/Promotions";
+import PromotionDetail from "@/pages/promotions/PromotionDetail";
+import Reviews from "@/pages/reviews/Reviews";
+import ReviewDetail from "@/pages/reviews/ReviewDetail";
+import Notifications from "@/pages/notifications/Notifications";
+import NotificationDetail from "@/pages/notifications/NotificationDetail";
+import Payments from "@/pages/payments/Payments";
+import LuckyWheel from "@/pages/luckyWheel/LuckyWheel";
 import Tables from "@/pages/tables/Tables";
 import Customers from "@/pages/customers/Customers";
 import Loyalty from "@/pages/loyalty/Loyalty";
@@ -19,9 +30,6 @@ import Reports from "@/pages/reports/Reports";
 import Settings from "@/pages/settings/Settings";
 import NotFound from "@/pages/NotFound";
 
-const REUSED_ROUTE = ({ Component, paths }) =>
-  paths.map((path) => ({ path, element: <Component /> }));
-
 export const router = createBrowserRouter([
   {
     element: (
@@ -29,10 +37,7 @@ export const router = createBrowserRouter([
         <AuthLayout />
       </PublicRoute>
     ),
-    children: [
-      { path: ROUTE_PATH.LOGIN, element: <Login /> },
-      { path: ROUTE_PATH.SIGNUP, element: <Signup /> },
-    ],
+    children: [{ path: ROUTE_PATH.LOGIN, element: <Login /> }],
   },
   {
     element: (
@@ -44,66 +49,54 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to={ROUTE_PATH.DASHBOARD} replace /> },
       { path: ROUTE_PATH.DASHBOARD, element: <Dashboard /> },
 
-      ...REUSED_ROUTE({
-        Component: Orders,
-        paths: [
-          ROUTE_PATH.ORDERS,
-          ROUTE_PATH.ORDERS_PENDING,
-          ROUTE_PATH.ORDERS_COMPLETED,
-          ROUTE_PATH.ORDERS_CANCELLED,
-        ],
-      }),
-      ...REUSED_ROUTE({
-        Component: Menu,
-        paths: [
-          ROUTE_PATH.MENU,
-          ROUTE_PATH.MENU_CATEGORIES,
-          ROUTE_PATH.MENU_COMBO,
-          ROUTE_PATH.MENU_PRICE,
-        ],
-      }),
-      ...REUSED_ROUTE({
-        Component: Tables,
-        paths: [ROUTE_PATH.TABLES, ROUTE_PATH.TABLES_QR, ROUTE_PATH.TABLES_MAP],
-      }),
-      ...REUSED_ROUTE({
-        Component: Customers,
-        paths: [
-          ROUTE_PATH.CUSTOMERS,
-          ROUTE_PATH.CUSTOMERS_SEGMENTS,
-          ROUTE_PATH.CUSTOMERS_HISTORY,
-        ],
-      }),
-      ...REUSED_ROUTE({
-        Component: Loyalty,
-        paths: [
-          ROUTE_PATH.LOYALTY,
-          ROUTE_PATH.LOYALTY_TIERS,
-          ROUTE_PATH.LOYALTY_VOUCHERS,
-          ROUTE_PATH.LOYALTY_EVENTS,
-        ],
-      }),
-      ...REUSED_ROUTE({
-        Component: Staff,
-        paths: [ROUTE_PATH.STAFF, ROUTE_PATH.STAFF_ROLES, ROUTE_PATH.STAFF_SHIFTS],
-      }),
-      ...REUSED_ROUTE({
-        Component: Reports,
-        paths: [
-          ROUTE_PATH.REPORTS,
-          ROUTE_PATH.REPORTS_PRODUCTS,
-          ROUTE_PATH.REPORTS_CUSTOMERS,
-        ],
-      }),
-      ...REUSED_ROUTE({
-        Component: Settings,
-        paths: [
-          ROUTE_PATH.SETTINGS,
-          ROUTE_PATH.SETTINGS_PAYMENT,
-          ROUTE_PATH.SETTINGS_PRINT,
-          ROUTE_PATH.SETTINGS_INTEGRATION,
-        ],
-      }),
+      // M1 — Đơn hàng: list kanban + trang thao tác POS riêng
+      { path: ROUTE_PATH.ORDERS, element: <Orders /> },
+      { path: ROUTE_PATH.ORDER_NEW, element: <OrderEditor /> },
+      { path: ROUTE_PATH.ORDER_DETAIL, element: <OrderEditor /> },
+
+      // M3 — Menu
+      { path: ROUTE_PATH.MENU, element: <Menu /> },
+      { path: ROUTE_PATH.MENU_DETAIL, element: <MenuDetail /> },
+
+      // M4 — Bàn & QR
+      { path: ROUTE_PATH.TABLES, element: <Tables /> },
+
+      // M5 — Khách hàng
+      { path: ROUTE_PATH.CUSTOMERS, element: <Customers /> },
+
+      // M6 — Loyalty & Events
+      { path: ROUTE_PATH.LOYALTY, element: <Loyalty /> },
+
+      // M9 — Thanh toán
+      { path: ROUTE_PATH.PAYMENTS, element: <Payments /> },
+
+      // M10 — Vòng quay may mắn
+      { path: ROUTE_PATH.LUCKY_WHEEL, element: <LuckyWheel /> },
+
+      // M11 — Kho & Nguyên liệu
+      { path: ROUTE_PATH.INVENTORY, element: <Inventory /> },
+      { path: ROUTE_PATH.INVENTORY_DETAIL, element: <InventoryDetail /> },
+
+      // M14 — Khuyến mãi / Voucher
+      { path: ROUTE_PATH.PROMOTIONS, element: <Promotions /> },
+      { path: ROUTE_PATH.PROMOTIONS_DETAIL, element: <PromotionDetail /> },
+
+      // M15 — Đánh giá & Phản hồi
+      { path: ROUTE_PATH.REVIEWS, element: <Reviews /> },
+      { path: ROUTE_PATH.REVIEWS_DETAIL, element: <ReviewDetail /> },
+
+      // M16 — Trung tâm Thông báo
+      { path: ROUTE_PATH.NOTIFICATIONS, element: <Notifications /> },
+      { path: ROUTE_PATH.NOTIFICATIONS_DETAIL, element: <NotificationDetail /> },
+
+      // M7 — Nhân viên
+      { path: ROUTE_PATH.STAFF, element: <Staff /> },
+
+      // M8 — Báo cáo
+      { path: ROUTE_PATH.REPORTS, element: <Reports /> },
+
+      // M13 — Cài đặt
+      { path: ROUTE_PATH.SETTINGS, element: <Settings /> },
     ],
   },
   { path: ROUTE_PATH.NOT_FOUND, element: <NotFound /> },

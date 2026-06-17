@@ -1,3 +1,5 @@
+import { ORDER_STATUS } from "@/constants/application";
+
 export const STATS = [
   {
     key: "revenue",
@@ -66,35 +68,35 @@ export const RECENT_ORDERS = [
     id: "#ORD-5821",
     table: "Bàn 04",
     total: 125_000,
-    status: "pending",
+    status: ORDER_STATUS.PENDING,
     timeAgo: "2 phút trước",
   },
   {
     id: "#ORD-5820",
     table: "Bàn 12",
     total: 85_000,
-    status: "confirmed",
+    status: ORDER_STATUS.CONFIRMED,
     timeAgo: "5 phút trước",
   },
   {
     id: "#ORD-5819",
     table: "Bàn 01",
     total: 240_000,
-    status: "preparing",
+    status: ORDER_STATUS.PREPARING,
     timeAgo: "12 phút trước",
   },
   {
     id: "#ORD-5818",
     table: "Mang đi",
     total: 45_000,
-    status: "completed",
+    status: ORDER_STATUS.COMPLETED,
     timeAgo: "18 phút trước",
   },
   {
     id: "#ORD-5817",
     table: "Bàn 08",
     total: 310_000,
-    status: "cancelled",
+    status: ORDER_STATUS.CANCELLED,
     timeAgo: "25 phút trước",
   },
 ];
