@@ -6,28 +6,52 @@ const { VITE_APP_REPORT_API_URL } = import.meta.env;
 
 export const AuthenticationApi = {
   login: (payload) => {
-    const endpoint = `/api/v1/authen/portal/login`;
+    const endpoint = `/api/v1/auth/login`;
     return apiCall(API_METHOD.POST, endpoint, payload);
   },
   logout: () => {
-    const endpoint = `/api/v1/authen/portal/logout`;
-    return apiCall(API_METHOD.POST, endpoint);
+    const endpoint = `/api/v1/auth/logout`;
+    return apiCall(API_METHOD.GET, endpoint);
   },
   getInfo: () => {
-    const endpoint = `/api/v1/authen/portal/me`;
+    const endpoint = `/api/v1/auth/me`;
     return apiCall(API_METHOD.GET, endpoint);
   },
   refreshToken: (payload) => {
-    const endpoint = `/api/v1/authen/portal/refresh-token`;
+    const endpoint = `/api/v1/auth/refresh-token`;
     return apiCall(API_METHOD.POST, endpoint, payload);
   },
   forgotPassword: (payload) => {
-    const endpoint = `/api/v1/authen/portal/forgot-password`;
+    const endpoint = `/api/v1/auth/forgot-password`;
     return apiCall(API_METHOD.POST, endpoint, payload);
   },
   changePassword: (payload) => {
-    const endpoint = `/api/v1/authen/portal/change-password`;
+    const endpoint = `/api/v1/auth/change-password`;
     return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+};
+
+// Danh mục (REST đơn giản: /api/v1/categories) — KHÁC ProductCategoryApi (search/pagination).
+export const CategoryApi = {
+  getAll: () => {
+    const endpoint = `/api/v1/categories`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  getById: (id) => {
+    const endpoint = `/api/v1/categories/${id}`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  create: (payload) => {
+    const endpoint = `/api/v1/categories`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  update: (id, payload) => {
+    const endpoint = `/api/v1/categories/${id}`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+  delete: (id) => {
+    const endpoint = `/api/v1/categories/${id}`;
+    return apiCall(API_METHOD.DELETE, endpoint);
   },
 };
 
@@ -221,6 +245,34 @@ export const OrderApi = {
   },
 };
 
+// Đơn hàng (REST số nhiều: /api/v1/orders) — API MỚI theo backend thật.
+// KHÁC OrderApi cũ (RPC /api/v1/order/*, scaffold) — cùng tiền lệ CustomersApi vs CustomerApi.
+// getAll nhận query: page, limit, status, tableId, customerId, startDate, endDate.
+export const OrdersApi = {
+  getAll: (params, signal) => {
+    const endpoint = `/api/v1/orders`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+  getById: (id) => {
+    const endpoint = `/api/v1/orders/${id}`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  create: (payload) => {
+    const endpoint = `/api/v1/orders`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  // Đổi trạng thái: payload = { status } (PENDING/CONFIRMED/PREPARING/READY/COMPLETED/CANCELLED).
+  updateStatus: (id, payload) => {
+    const endpoint = `/api/v1/orders/${id}/status`;
+    return apiCall(API_METHOD.PATCH, endpoint, payload);
+  },
+  // Hoàn trả đơn đã COMPLETED (trừ lại điểm tích luỹ): payload = { reason }.
+  refund: (id, payload) => {
+    const endpoint = `/api/v1/orders/${id}/refund`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+};
+
 export const TableApi = {
   getAll: () => {
     const endpoint = `/api/v1/table/all`;
@@ -263,6 +315,59 @@ export const TableApi = {
   updateStatus: (payload) => {
     const endpoint = `/api/v1/table/update-status`;
     return apiCall(API_METHOD.PATCH, endpoint, payload);
+  },
+};
+
+// Khu vực (REST số nhiều: /api/v1/zones) — 1 khu vực chứa nhiều bàn.
+export const ZoneApi = {
+  getAll: (params, signal) => {
+    const endpoint = `/api/v1/zones`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+  getById: (id) => {
+    const endpoint = `/api/v1/zones/${id}`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  create: (payload) => {
+    const endpoint = `/api/v1/zones`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  update: (id, payload) => {
+    const endpoint = `/api/v1/zones/${id}`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+  delete: (id) => {
+    const endpoint = `/api/v1/zones/${id}`;
+    return apiCall(API_METHOD.DELETE, endpoint);
+  },
+};
+
+// Bàn ăn (REST số nhiều: /api/v1/tables) — KHÁC TableApi cũ (RPC /api/v1/table/*).
+// getAll hỗ trợ query: zoneId (lọc bàn theo khu vực).
+export const TablesApi = {
+  getAll: (params, signal) => {
+    const endpoint = `/api/v1/tables`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+  getById: (id) => {
+    const endpoint = `/api/v1/tables/${id}`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  create: (payload) => {
+    const endpoint = `/api/v1/tables`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  update: (id, payload) => {
+    const endpoint = `/api/v1/tables/${id}`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+  delete: (id) => {
+    const endpoint = `/api/v1/tables/${id}`;
+    return apiCall(API_METHOD.DELETE, endpoint);
+  },
+  generateQR: (id) => {
+    const endpoint = `/api/v1/tables/${id}/qrcode`;
+    return apiCall(API_METHOD.POST, endpoint);
   },
 };
 
@@ -310,6 +415,30 @@ export const CustomerApi = {
   export: (payload) => {
     const endpoint = `/api/v1/customer/export`;
     return apiCall(API_METHOD.POST, endpoint, payload, null, null, { responseType: "blob" });
+  },
+};
+
+export const CustomersApi = {
+  getAll: (params, signal) => {
+    const endpoint = `/api/v1/customers`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+  getById: (id) => {
+    const endpoint = `/api/v1/customers/${id}`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  create: (payload) => {
+    const endpoint = `/api/v1/customers`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  update: (id, payload) => {
+    const endpoint = `/api/v1/customers/${id}`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+  // Cộng / trừ điểm: pointsChange âm = trừ, dương = cộng.
+  adjustPoints: (id, payload) => {
+    const endpoint = `/api/v1/customers/${id}/points`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
   },
 };
 
@@ -420,6 +549,51 @@ export const StaffApi = {
   },
 };
 
+// Nhân viên (REST số nhiều: /api/v1/employees) — KHÁC StaffApi cũ (RPC /api/v1/staff/*).
+// `role` là code vai trò (chuỗi thường: admin/cashier/barista); `roleId` được populate khi GET.
+export const EmployeeApi = {
+  getAll: (params, signal) => {
+    const endpoint = `/api/v1/employees`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+  getById: (id) => {
+    const endpoint = `/api/v1/employees/${id}`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  create: (payload) => {
+    const endpoint = `/api/v1/employees`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  update: (id, payload) => {
+    const endpoint = `/api/v1/employees/${id}`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+  delete: (id) => {
+    const endpoint = `/api/v1/employees/${id}`;
+    return apiCall(API_METHOD.DELETE, endpoint);
+  },
+};
+
+// Ca làm việc (/api/v1/shifts) — mở/đóng ca, tiền quỹ.
+export const ShiftApi = {
+  search: (params, signal) => {
+    const endpoint = `/api/v1/shifts/search`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+  open: (payload) => {
+    const endpoint = `/api/v1/shifts/open`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  detail: (id) => {
+    const endpoint = `/api/v1/shifts/${id}/detail`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  close: (id, payload) => {
+    const endpoint = `/api/v1/shifts/${id}/close`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+};
+
 export const StaffRoleApi = {
   all: () => {
     const endpoint = `/api/v1/staff/role/all`;
@@ -468,50 +642,103 @@ export const StoreApi = {
   },
 };
 
+// Khớp routes BE thực tế: GET /vouchers/search, POST /vouchers/create,
+// GET /vouchers/:id/detail, PUT /vouchers/:id/update, DELETE /vouchers/:id/delete.
 export const VoucherApi = {
+  getAll: (signal) => {
+    const endpoint = `/api/v1/vouchers/search`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { signal });
+  },
+  detail: (id) => {
+    const endpoint = `/api/v1/vouchers/${id}/detail`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
   create: (payload) => {
-    const endpoint = `/api/v1/voucher/create`;
+    const endpoint = `/api/v1/vouchers/create`;
     return apiCall(API_METHOD.POST, endpoint, payload);
   },
-  update: (payload) => {
-    const endpoint = `/api/v1/voucher/update`;
+  update: (id, payload) => {
+    const endpoint = `/api/v1/vouchers/${id}/update`;
     return apiCall(API_METHOD.PUT, endpoint, payload);
   },
   delete: (id) => {
-    const endpoint = `/api/v1/voucher/delete/${id}`;
+    const endpoint = `/api/v1/vouchers/${id}/delete`;
     return apiCall(API_METHOD.DELETE, endpoint);
   },
-  detail: (id) => {
-    const endpoint = `/api/v1/voucher/detail/${id}`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  search: (payload) => {
-    const endpoint = `/api/v1/voucher/search`;
+  validate: (payload) => {
+    const endpoint = `/api/v1/vouchers/validate`;
     return apiCall(API_METHOD.POST, endpoint, payload);
   },
-  searchWithPagination: (payload, signal) => {
-    const endpoint = `/api/v1/voucher/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload, null, null, { signal }).then((res) => {
-      return preProcessData(res, payload?.pageSize);
-    });
+};
+
+// Nhóm khách hàng mục tiêu (Segmentation) — /api/v1/customer-segments.
+export const CustomerSegmentApi = {
+  getAll: (params, signal) => {
+    const endpoint = `/api/v1/customer-segments`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
   },
-  updateActive: (payload) => {
-    const endpoint = `/api/v1/voucher/update-active`;
-    return apiCall(API_METHOD.PATCH, endpoint, payload);
+  getById: (id) => {
+    const endpoint = `/api/v1/customer-segments/${id}`;
+    return apiCall(API_METHOD.GET, endpoint);
   },
-  importVoucherCode: (payload) => {
-    const endpoint = `/api/v1/voucher/import-code`;
-    return apiCall(API_METHOD.POST, endpoint, payload, {
-      "Content-Type": "multipart/form-data",
-    });
+  create: (payload) => {
+    const endpoint = `/api/v1/customer-segments`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
   },
-  getTemplateImport: () => {
-    const endpoint = `/api/v1/voucher/template/import`;
-    return apiCall(API_METHOD.GET, endpoint, null, null, null, { responseType: "blob" });
+  update: (id, payload) => {
+    const endpoint = `/api/v1/customer-segments/${id}`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
   },
-  export: (payload) => {
-    const endpoint = `/api/v1/voucher/export`;
-    return apiCall(API_METHOD.POST, endpoint, payload, null, null, { responseType: "blob" });
+  delete: (id) => {
+    const endpoint = `/api/v1/customer-segments/${id}`;
+    return apiCall(API_METHOD.DELETE, endpoint);
+  },
+  // Đếm thử số khách thỏa bộ tiêu chí (không lưu): payload = { criteria }.
+  preview: (payload) => {
+    const endpoint = `/api/v1/customer-segments/preview`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  sync: (id) => {
+    const endpoint = `/api/v1/customer-segments/${id}/sync`;
+    return apiCall(API_METHOD.POST, endpoint);
+  },
+  getMembers: (id, params, signal) => {
+    const endpoint = `/api/v1/customer-segments/${id}/members`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+};
+
+// Chiến dịch khuyến mãi (phát voucher vào ví theo nhóm KH) — /api/v1/campaigns.
+export const CampaignApi = {
+  getAll: (params, signal) => {
+    const endpoint = `/api/v1/campaigns`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+  getById: (id) => {
+    const endpoint = `/api/v1/campaigns/${id}`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  create: (payload) => {
+    const endpoint = `/api/v1/campaigns`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  update: (id, payload) => {
+    const endpoint = `/api/v1/campaigns/${id}`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+  delete: (id) => {
+    const endpoint = `/api/v1/campaigns/${id}`;
+    return apiCall(API_METHOD.DELETE, endpoint);
+  },
+  // Kích hoạt: phát voucher vào ví toàn bộ thành viên nhóm mục tiêu.
+  activate: (id) => {
+    const endpoint = `/api/v1/campaigns/${id}/activate`;
+    return apiCall(API_METHOD.POST, endpoint);
+  },
+  // Huỷ chiến dịch đang chạy: thu hồi voucher chưa sử dụng.
+  deactivate: (id) => {
+    const endpoint = `/api/v1/campaigns/${id}/deactivate`;
+    return apiCall(API_METHOD.POST, endpoint);
   },
 };
 

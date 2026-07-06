@@ -9,34 +9,25 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/helpers/format";
-import { DATE_TIME_FORMAT } from "@/constants/application";
-import { EmployeeApi, StaffRoleApi } from "@/apis";
-import { EmployeeFormDialog } from "./EmployeeFormDialog";
+import {
+  ACTIVE_STATUS,
+  ACTIVE_STATUS_LABEL,
+  DATE_TIME_FORMAT,
+} from "@/constants/application";
+import { ZoneApi } from "@/apis";
+import { ZoneFormDialog } from "./ZoneFormDialog";
 
-const QUERY_KEY = ["employees"];
+const QUERY_KEY = ["zones"];
 
-const STATUS_BADGE = {
-  active: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  inactive: "bg-muted text-muted-foreground",
-  locked: "bg-destructive/10 text-destructive",
-  pending: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-};
-const STATUS_LABEL = {
-  active: "Đang hoạt động",
-  inactive: "Ngưng hoạt động",
-  locked: "Đã khoá",
-  pending: "Chờ kích hoạt",
-};
-
-async function fetchEmployees() {
-  const res = await EmployeeApi.getAll();
+async function fetchZones() {
+  const res = await ZoneApi.getAll();
   if (!res?.data?.success) {
-    throw new Error(res?.data?.message || "Không tải được danh sách nhân viên.");
+    throw new Error(res?.data?.message || "Không tải được danh sách khu vực.");
   }
   return res.data.data || [];
 }
 
-export default function Staff() {
+export default function Zones() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -46,52 +37,36 @@ export default function Staff() {
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
 
-  const { data: employees = [], isLoading, isError } = useQuery({
+  const { data: zones = [], isLoading, isError } = useQuery({
     queryKey: QUERY_KEY,
-    queryFn: fetchEmployees,
+    queryFn: fetchZones,
   });
-
-  const { data: roles = [] } = useQuery({
-    queryKey: ["staff-roles"],
-    queryFn: async () => {
-      const res = await StaffRoleApi.all();
-      return res?.data?.success ? res.data.data || [] : [];
-    },
-    staleTime: 5 * 60_000,
-  });
-
-  const roleNameByCode = useMemo(() => {
-    const map = {};
-    roles.forEach((r) => {
-      if (r.code) map[r.code] = r.name;
-    });
-    return map;
-  }, [roles]);
 
   const filtered = useMemo(() => {
-    if (!search) return employees;
+    if (!search) return zones;
     const q = search.toLowerCase();
-    return employees.filter(
-      (e) =>
-        e.name?.toLowerCase().includes(q) || e.email?.toLowerCase().includes(q)
+    return zones.filter(
+      (z) =>
+        z.name?.toLowerCase().includes(q) ||
+        z.description?.toLowerCase().includes(q)
     );
-  }, [employees, search]);
+  }, [zones, search]);
 
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const saveMutation = useMutation({
     mutationFn: async (payload) => {
       const res = editing?._id
-        ? await EmployeeApi.update(editing._id, payload)
-        : await EmployeeApi.create(payload);
+        ? await ZoneApi.update(editing._id, payload)
+        : await ZoneApi.create(payload);
       if (!res?.data?.success) {
-        throw new Error(res?.data?.message || "Lưu nhân viên thất bại.");
+        throw new Error(res?.data?.message || "Lưu khu vực thất bại.");
       }
       return res.data;
     },
     onSuccess: (data) => {
       toast.success(
-        data?.message || (editing?._id ? "Đã cập nhật nhân viên." : "Đã thêm nhân viên.")
+        data?.message || (editing?._id ? "Đã cập nhật khu vực." : "Đã thêm khu vực.")
       );
       qc.invalidateQueries({ queryKey: QUERY_KEY });
       setFormOpen(false);
@@ -102,14 +77,14 @@ export default function Staff() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      const res = await EmployeeApi.delete(id);
+      const res = await ZoneApi.delete(id);
       if (!res?.data?.success) {
-        throw new Error(res?.data?.message || "Xoá nhân viên thất bại.");
+        throw new Error(res?.data?.message || "Xoá khu vực thất bại.");
       }
       return res.data;
     },
     onSuccess: (data) => {
-      toast.success(data?.message || "Đã xoá nhân viên.");
+      toast.success(data?.message || "Đã xoá khu vực.");
       qc.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleting(null);
     },
@@ -121,60 +96,54 @@ export default function Staff() {
     setFormOpen(true);
   };
 
+  const openEdit = (zone) => {
+    setEditing(zone);
+    setFormOpen(true);
+  };
+
   const columns = [
     {
       key: "name",
-      title: "Nhân viên",
-      minWidth: 200,
-      render: (e) => (
-        <div>
-          <p className="font-medium text-foreground">{e.name}</p>
-          <p className="text-xs text-muted-foreground">{e.email}</p>
-        </div>
-      ),
+      title: "Tên khu vực",
+      minWidth: 180,
+      render: (z) => <span className="font-medium text-foreground">{z.name}</span>,
     },
     {
-      key: "role",
-      title: "Vai trò",
-      width: 150,
-      render: (e) => (
-        <Badge variant="secondary">
-          {e.roleId?.name || roleNameByCode[e.role] || e.role || "—"}
-        </Badge>
-      ),
+      key: "description",
+      title: "Mô tả",
+      minWidth: 240,
+      render: (z) =>
+        z.description || <span className="text-muted-foreground">—</span>,
     },
     {
-      key: "status",
+      key: "isActive",
       title: "Trạng thái",
       width: 150,
-      render: (e) => (
-        <Badge className={STATUS_BADGE[e.status] || "bg-muted text-muted-foreground"}>
-          {STATUS_LABEL[e.status] || e.status}
-        </Badge>
-      ),
+      render: (z) =>
+        z.isActive === ACTIVE_STATUS.ACTIVE ? (
+          <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            {ACTIVE_STATUS_LABEL[ACTIVE_STATUS.ACTIVE]}
+          </Badge>
+        ) : (
+          <Badge variant="secondary">
+            {ACTIVE_STATUS_LABEL[z.isActive] || "Ngưng hoạt động"}
+          </Badge>
+        ),
     },
     {
       key: "createdAt",
       title: "Ngày tạo",
       width: 160,
-      render: (e) => formatDate(e.createdAt, DATE_TIME_FORMAT),
+      render: (z) => formatDate(z.createdAt, DATE_TIME_FORMAT),
     },
     {
       key: "actions",
       title: "",
       width: 90,
       align: "right",
-      render: (e) => (
+      render: (z) => (
         <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            title="Sửa"
-            onClick={() => {
-              setEditing(e);
-              setFormOpen(true);
-            }}
-          >
+          <Button variant="ghost" size="icon-sm" title="Sửa" onClick={() => openEdit(z)}>
             <Pencil className="size-4" />
           </Button>
           <Button
@@ -182,7 +151,7 @@ export default function Staff() {
             size="icon-sm"
             title="Xoá"
             className="text-destructive hover:text-destructive"
-            onClick={() => setDeleting(e)}
+            onClick={() => setDeleting(z)}
           >
             <Trash2 className="size-4" />
           </Button>
@@ -194,12 +163,12 @@ export default function Staff() {
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Nhân viên"
-        description="Quản lý nhân viên và phân quyền."
+        title="Khu vực"
+        description="Quản lý khu vực để nhóm các bàn ăn."
         actions={
           <Button onClick={openCreate}>
             <Plus className="size-4" />
-            Thêm nhân viên
+            Thêm khu vực
           </Button>
         }
       />
@@ -214,7 +183,7 @@ export default function Staff() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            placeholder="Tìm theo tên / email..."
+            placeholder="Tìm theo tên / mô tả..."
             className="h-8 w-64 rounded-md border border-input bg-background pl-8 pr-3 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
@@ -233,17 +202,16 @@ export default function Staff() {
           setPageSize(ps);
         }}
         heightOffset={220}
-        empty={isError ? "Không tải được dữ liệu." : "Chưa có nhân viên nào."}
+        empty={isError ? "Không tải được dữ liệu." : "Chưa có khu vực nào."}
       />
 
-      <EmployeeFormDialog
+      <ZoneFormDialog
         open={formOpen}
         onOpenChange={(v) => {
           setFormOpen(v);
           if (!v) setEditing(null);
         }}
-        employee={editing}
-        roles={roles}
+        zone={editing}
         loading={saveMutation.isPending}
         onSubmit={(payload) => saveMutation.mutate(payload)}
       />
@@ -251,10 +219,10 @@ export default function Staff() {
       <ConfirmDialog
         open={!!deleting}
         onOpenChange={(v) => !v && setDeleting(null)}
-        title="Xoá nhân viên"
+        title="Xoá khu vực"
         description={
           deleting
-            ? `Bạn có chắc muốn xoá "${deleting.name}"? Hành động này không thể hoàn tác.`
+            ? `Bạn có chắc muốn xoá khu vực "${deleting.name}"? Hành động này không thể hoàn tác.`
             : ""
         }
         confirmText="Xoá"

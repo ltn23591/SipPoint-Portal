@@ -1,75 +1,242 @@
-import { useState } from "react";
-import { Plus, Search, Ban } from "lucide-react";
+import { useMemo, useState } from "react";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus, Search, Pencil, Coins } from "lucide-react";
+import { toast } from "sonner";
 
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { formatVND, formatNumber } from "@/helpers/format";
-import { MOCK_CUSTOMERS, TIER_LABEL, TIER_VARIANT } from "./mockData";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useDebounce } from "@/hooks/useDebounce";
+import { formatNumber, formatVND } from "@/helpers/format";
+import { CustomersApi, MembershipTierApi } from "@/apis";
+import { CustomerFormDialog } from "./CustomerFormDialog";
+import { PointsDialog } from "./PointsDialog";
+
+const ALL_TIERS = "__all__";
+
+function parseList(body) {
+  const list = body?.data || [];
+  const total =
+    body?.total ??
+    body?.totalCount ??
+    body?.count ??
+    body?.pagination?.total ??
+    body?.pagination?.totalItems ??
+    list.length;
+  return { list, total };
+}
 
 export default function Customers() {
-  const [search, setSearch] = useState("");
+  const qc = useQueryClient();
+  const [searchInput, setSearchInput] = useState("");
+  const search = useDebounce(searchInput, 400);
+  const [tier, setTier] = useState(ALL_TIERS);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const filtered = MOCK_CUSTOMERS.filter((c) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return c.fullName.toLowerCase().includes(q) || c.phone.includes(q);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [pointsFor, setPointsFor] = useState(null);
+
+  const { data: tiers = [] } = useQuery({
+    queryKey: ["membership-tiers-current"],
+    queryFn: async () => {
+      const res = await MembershipTierApi.getAllCurrent();
+      return res?.data?.success ? res.data.data || [] : [];
+    },
+    staleTime: 5 * 60_000,
   });
-  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const params = useMemo(
+    () => ({
+      page,
+      limit: pageSize,
+      ...(search ? { search } : {}),
+      ...(tier !== ALL_TIERS ? { tier } : {}),
+    }),
+    [page, pageSize, search, tier]
+  );
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["customers", params],
+    queryFn: async ({ signal }) => {
+      const res = await CustomersApi.getAll(params, signal);
+      if (!res?.data?.success) {
+        throw new Error(res?.data?.message || "Không tải được danh sách khách hàng.");
+      }
+      return parseList(res.data);
+    },
+    placeholderData: keepPreviousData,
+  });
+
+  const customers = data?.list ?? [];
+  const total = data?.total ?? 0;
+
+  const saveMutation = useMutation({
+    mutationFn: async (payload) => {
+      const res = editing?._id
+        ? await CustomersApi.update(editing._id, payload)
+        : await CustomersApi.create(payload);
+      if (!res?.data?.success) {
+        throw new Error(res?.data?.message || "Lưu khách hàng thất bại.");
+      }
+      return res.data;
+    },
+    onSuccess: (res) => {
+      toast.success(res?.message || (editing?._id ? "Đã cập nhật khách hàng." : "Đã thêm khách hàng."));
+      qc.invalidateQueries({ queryKey: ["customers"] });
+      setFormOpen(false);
+      setEditing(null);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const pointsMutation = useMutation({
+    mutationFn: async (payload) => {
+      const res = await CustomersApi.adjustPoints(pointsFor._id, payload);
+      if (!res?.data?.success) {
+        throw new Error(res?.data?.message || "Điều chỉnh điểm thất bại.");
+      }
+      return res.data;
+    },
+    onSuccess: (res) => {
+      toast.success(res?.message || "Đã điều chỉnh điểm.");
+      qc.invalidateQueries({ queryKey: ["customers"] });
+      setPointsFor(null);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const openCreate = () => {
+    setEditing(null);
+    setFormOpen(true);
+  };
 
   const columns = [
     {
+      key: "customerId",
+      title: "Mã KH",
+      width: 110,
+      render: (c) =>
+        c.customerId ? (
+          <span className="font-mono text-xs text-muted-foreground">{c.customerId}</span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
+    },
+    {
       key: "fullName",
       title: "Khách hàng",
-      minWidth: 180,
+      minWidth: 170,
       render: (c) => (
         <div className="flex items-center gap-1.5">
           <span className="font-medium text-foreground">{c.fullName}</span>
-          {c.isBlacklisted && (
-            <Badge variant="destructive" className="gap-1">
-              <Ban className="size-3" />
-              Khóa
-            </Badge>
-          )}
+          {c.isActive === false && <Badge variant="secondary">Ngưng</Badge>}
         </div>
       ),
     },
-    { key: "phone", title: "Điện thoại", width: 130 },
+    { key: "phone", title: "Điện thoại", width: 120 },
     {
-      key: "loyaltyTier",
+      key: "email",
+      title: "Email",
+      minWidth: 180,
+      render: (c) => c.email || <span className="text-muted-foreground">—</span>,
+    },
+    {
+      key: "tier",
       title: "Hạng",
       width: 110,
-      render: (c) => <Badge variant={TIER_VARIANT[c.loyaltyTier]}>{TIER_LABEL[c.loyaltyTier]}</Badge>,
+      render: (c) =>
+        c.tierId?.name ? (
+          <Badge variant="secondary">{c.tierId.name}</Badge>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
     },
-    { key: "points", title: "Điểm", width: 90, align: "right", render: (c) => formatNumber(c.points) },
-    { key: "totalSpent", title: "Tổng chi tiêu", width: 140, align: "right", render: (c) => formatVND(c.totalSpent) },
-    { key: "orderCount", title: "Số đơn", width: 80, align: "right", render: (c) => formatNumber(c.orderCount) },
+    {
+      key: "currentPoints",
+      title: "Điểm",
+      width: 90,
+      align: "right",
+      render: (c) => formatNumber(c.currentPoints ?? 0),
+    },
+    {
+      key: "totalSpent",
+      title: "Tổng chi tiêu",
+      width: 130,
+      align: "right",
+      render: (c) => formatVND(c.totalSpent ?? 0),
+    },
+    {
+      key: "actions",
+      title: "",
+      width: 90,
+      align: "right",
+      render: (c) => (
+        <div className="flex justify-end gap-1">
+          <Button variant="ghost" size="icon-sm" title="Sửa" onClick={() => { setEditing(c); setFormOpen(true); }}>
+            <Pencil className="size-4" />
+          </Button>
+          <Button variant="ghost" size="icon-sm" title="Cộng / trừ điểm" onClick={() => setPointsFor(c)}>
+            <Coins className="size-4" />
+          </Button>
+        </div>
+      ),
+    },
   ];
 
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
         title="Khách hàng"
-        description="Hồ sơ khách hàng, điểm tích luỹ và lịch sử mua."
+        description="Hồ sơ khách hàng, điểm tích luỹ và hạng thành viên."
         actions={
-          <Button>
+          <Button onClick={openCreate}>
             <Plus className="size-4" />
             Thêm khách hàng
           </Button>
         }
       />
 
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Select
+          value={tier}
+          onValueChange={(v) => {
+            setTier(v);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="h-8 w-44">
+            <SelectValue placeholder="Hạng" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_TIERS}>Tất cả hạng</SelectItem>
+            {tiers.map((t) => (
+              <SelectItem key={t._id || t.name} value={t.name}>
+                {t.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Tìm theo tên / SĐT..."
+            value={searchInput}
+            onChange={(e) => {
+              setSearchInput(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Tìm theo tên / SĐT / email..."
             className="h-8 w-64 rounded-md border border-input bg-background pl-8 pr-3 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
@@ -77,13 +244,37 @@ export default function Customers() {
 
       <DataTable
         columns={columns}
-        dataSource={paginated}
+        dataSource={customers}
         rowKey="_id"
-        total={filtered.length}
+        loading={isLoading}
+        total={total}
         pageIndex={page}
         pageSize={pageSize}
-        onChange={(p, ps) => { setPage(p); setPageSize(ps); }}
+        onChange={(p, ps) => {
+          setPage(p);
+          setPageSize(ps);
+        }}
         heightOffset={220}
+        empty={isError ? "Không tải được dữ liệu." : "Không có khách hàng nào."}
+      />
+
+      <CustomerFormDialog
+        open={formOpen}
+        onOpenChange={(v) => {
+          setFormOpen(v);
+          if (!v) setEditing(null);
+        }}
+        customer={editing}
+        loading={saveMutation.isPending}
+        onSubmit={(payload) => saveMutation.mutate(payload)}
+      />
+
+      <PointsDialog
+        open={!!pointsFor}
+        onOpenChange={(v) => !v && setPointsFor(null)}
+        customer={pointsFor}
+        loading={pointsMutation.isPending}
+        onSubmit={(payload) => pointsMutation.mutate(payload)}
       />
     </div>
   );
