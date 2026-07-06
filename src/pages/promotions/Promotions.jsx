@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { Eye, Pencil, Trash2, Plus, Search } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Eye, Pencil, Trash2, Plus, Search, Coins } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,9 +15,9 @@ import {
 import { DataTable } from "@/components/common/DataTable";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { PageHeader } from "@/components/common/PageHeader";
-import { formatVND } from "@/helpers/format";
+import { formatVND, formatNumber } from "@/helpers/format";
 import { ROUTE_PATH } from "@/constants/routePaths";
-import { MOCK_PROMOTIONS } from "./mockData";
+import { VoucherApi } from "@/apis";
 import {
   PROMO_STATUS_LABEL,
   PROMO_STATUS_VARIANT,
@@ -24,32 +26,60 @@ import {
   TEXT,
 } from "./constants";
 
+function displayStatus(v) {
+  if (v.endDate && new Date(v.endDate) < new Date()) return "expired";
+  return v.isActive === "active" ? "active" : "inactive";
+}
+
 export default function Promotions() {
   const navigate = useNavigate();
-  const [items, setItems] = useState(MOCK_PROMOTIONS);
+  const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, item: null });
 
-  const filtered = items.filter((p) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)
-    );
+  const { data: items = [], isLoading, isError } = useQuery({
+    queryKey: ["vouchers"],
+    queryFn: async ({ signal }) => {
+      const res = await VoucherApi.getAll(signal);
+      if (!res?.data?.success) {
+        throw new Error(res?.data?.message || "Không tải được danh sách voucher.");
+      }
+      return res.data.data || [];
+    },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      const res = await VoucherApi.delete(id);
+      if (!res?.data?.success) throw new Error(res?.data?.message || "Xóa voucher thất bại.");
+      return res.data;
+    },
+    onSuccess: (res) => {
+      toast.success(res?.message || "Đã xóa voucher.");
+      qc.invalidateQueries({ queryKey: ["vouchers"] });
+      setDeleteDialog({ open: false, item: null });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const filtered = useMemo(() => {
+    if (!search) return items;
+    const q = search.toLowerCase();
+    return items.filter(
+      (p) =>
+        (p.code || "").toLowerCase().includes(q) ||
+        (p.title || "").toLowerCase().includes(q)
+    );
+  }, [items, search]);
+
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const goDetail = (row, mode) =>
     navigate(ROUTE_PATH.PROMOTIONS_DETAIL.replace(":id", row._id), {
       state: { mode },
     });
-
-  const handleDelete = () => {
-    setItems((prev) => prev.filter((p) => p._id !== deleteDialog.item._id));
-    setDeleteDialog({ open: false, item: null });
-  };
 
   const columns = [
     {
@@ -60,44 +90,72 @@ export default function Promotions() {
         <span className="font-semibold text-primary">{row.code}</span>
       ),
     },
-    { key: "name", title: TEXT.colName, minWidth: 200 },
+    { key: "title", title: TEXT.colName, minWidth: 180 },
     {
-      key: "type",
+      key: "discountType",
       title: TEXT.colType,
-      width: 130,
+      width: 120,
       render: (row) => (
         <span className="text-sm text-muted-foreground">
-          {PROMO_TYPE_LABEL[row.type]}
+          {PROMO_TYPE_LABEL[row.discountType] || row.discountType}
         </span>
       ),
     },
     {
-      key: "value",
+      key: "discountValue",
       title: TEXT.colValue,
-      width: 110,
+      width: 100,
       align: "right",
       render: (row) => (
         <span className="font-medium">
-          {row.type === PROMO_TYPE.PERCENT ? `${row.value}%` : formatVND(row.value)}
+          {row.discountType === PROMO_TYPE.PERCENT
+            ? `${row.discountValue}%`
+            : formatVND(row.discountValue)}
         </span>
       ),
     },
     {
-      key: "minOrder",
+      key: "minOrderValue",
       title: TEXT.colMinOrder,
-      width: 130,
+      width: 120,
       align: "right",
-      render: (row) => formatVND(row.minOrder),
+      render: (row) => formatVND(row.minOrderValue ?? 0),
+    },
+    {
+      key: "pointsCost",
+      title: "Đổi điểm",
+      width: 100,
+      align: "right",
+      render: (row) =>
+        row.pointsCost > 0 ? (
+          <span className="inline-flex items-center gap-1 text-sm font-medium text-amber-600">
+            <Coins className="size-3.5" />
+            {formatNumber(row.pointsCost)}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
+    },
+    {
+      key: "usage",
+      title: "Đã dùng / Phát / Kho",
+      width: 140,
+      align: "right",
+      render: (row) => (
+        <span className="text-sm tabular-nums text-muted-foreground">
+          {formatNumber(row.usedCount ?? 0)} / {formatNumber(row.issuedCount ?? 0)} /{" "}
+          {formatNumber(row.usageLimit ?? 0)}
+        </span>
+      ),
     },
     {
       key: "status",
       title: TEXT.colStatus,
-      width: 120,
-      render: (row) => (
-        <Badge variant={PROMO_STATUS_VARIANT[row.status]}>
-          {PROMO_STATUS_LABEL[row.status]}
-        </Badge>
-      ),
+      width: 110,
+      render: (row) => {
+        const s = displayStatus(row);
+        return <Badge variant={PROMO_STATUS_VARIANT[s]}>{PROMO_STATUS_LABEL[s]}</Badge>;
+      },
     },
     {
       key: "actions",
@@ -185,6 +243,7 @@ export default function Promotions() {
         columns={columns}
         dataSource={paginated}
         rowKey="_id"
+        loading={isLoading}
         total={filtered.length}
         pageIndex={page}
         pageSize={pageSize}
@@ -193,6 +252,7 @@ export default function Promotions() {
           setPageSize(ps);
         }}
         heightOffset={220}
+        empty={isError ? "Không tải được dữ liệu." : "Chưa có voucher nào."}
       />
 
       <ConfirmDialog
@@ -200,12 +260,13 @@ export default function Promotions() {
         onOpenChange={(open) => setDeleteDialog((s) => ({ ...s, open }))}
         title={TEXT.confirmDeleteTitle}
         description={
-          deleteDialog.item ? TEXT.confirmDeleteDesc(deleteDialog.item.name) : ""
+          deleteDialog.item ? TEXT.confirmDeleteDesc(deleteDialog.item.title) : ""
         }
         confirmText={TEXT.confirmYes}
         cancelText={TEXT.confirmNo}
         variant="destructive"
-        onConfirm={handleDelete}
+        loading={deleteMutation.isPending}
+        onConfirm={() => deleteMutation.mutate(deleteDialog.item._id)}
       />
     </div>
   );

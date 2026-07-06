@@ -1,7 +1,7 @@
 import { Bell, ChevronDown, ChevronRight, Home, LogOut, Settings, User } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Link, useLocation, useMatches } from "react-router";
+import { Link, useLocation, useMatches, useNavigate } from "react-router";
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,10 +15,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { ROLE_LABEL } from "@/constants/application";
+import { ROUTE_PATH } from "@/constants/routePaths";
 
 // Segment → Vietnamese label map
 const SEGMENT_LABEL = {
   dashboard: "Dashboard",
+  profile: "Hồ sơ",
   orders: "Đơn hàng",
   pending: "Chờ xác nhận",
   completed: "Đã hoàn thành",
@@ -89,6 +91,7 @@ function useBreadcrumbs() {
 
 export function Topbar() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const today = new Date();
   const todayLabel = format(today, "'Hôm nay,' dd MMMM", { locale: vi });
   const breadcrumbs = useBreadcrumbs();
@@ -168,11 +171,11 @@ export function Topbar() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate(ROUTE_PATH.PROFILE)}>
               <User className="mr-2 size-4" />
               Hồ sơ cá nhân
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate(ROUTE_PATH.SETTINGS)}>
               <Settings className="mr-2 size-4" />
               Cài đặt
             </DropdownMenuItem>

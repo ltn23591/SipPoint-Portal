@@ -13,15 +13,15 @@ export const PROMO_TYPE_OPTIONS = Object.entries(PROMO_TYPE_LABEL).map(
 );
 
 export const PROMO_STATUS_VARIANT = {
-  ACTIVE: "success",
-  INACTIVE: "secondary",
-  EXPIRED: "destructive",
+  active: "success",
+  inactive: "secondary",
+  expired: "destructive",
 };
 
 export const PROMO_STATUS_LABEL = {
-  ACTIVE: "Đang chạy",
-  INACTIVE: "Tạm dừng",
-  EXPIRED: "Hết hạn",
+  active: "Đang chạy",
+  inactive: "Tạm dừng",
+  expired: "Hết hạn",
 };
 
 export const TEXT = {
