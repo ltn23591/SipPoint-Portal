@@ -214,6 +214,30 @@ export const CustomersApi = {
   },
 };
 
+export const CustomersApi = {
+  getAll: (params, signal) => {
+    const endpoint = `/api/v1/customers`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+  getById: (id) => {
+    const endpoint = `/api/v1/customers/${id}`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  create: (payload) => {
+    const endpoint = `/api/v1/customers`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  update: (id, payload) => {
+    const endpoint = `/api/v1/customers/${id}`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+  // Cộng / trừ điểm: pointsChange âm = trừ, dương = cộng.
+  adjustPoints: (id, payload) => {
+    const endpoint = `/api/v1/customers/${id}/points`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+};
+
 export const MembershipTierApi = {
   getAllByProgramId: (programId) => {
     const endpoint = `/api/v1/membership-tier/all/${programId}`;
@@ -277,6 +301,51 @@ export const MembershipProgramApi = {
   approve: (payload) => {
     const endpoint = `/api/v1/membership-program/approve`;
     return apiCall(API_METHOD.PATCH, endpoint, payload);
+  },
+};
+
+// Nhân viên (REST số nhiều: /api/v1/employees) — KHÁC StaffApi cũ (RPC /api/v1/staff/*).
+// `role` là code vai trò (chuỗi thường: admin/cashier/barista); `roleId` được populate khi GET.
+export const EmployeeApi = {
+  getAll: (params, signal) => {
+    const endpoint = `/api/v1/employees`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+  getById: (id) => {
+    const endpoint = `/api/v1/employees/${id}`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  create: (payload) => {
+    const endpoint = `/api/v1/employees`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  update: (id, payload) => {
+    const endpoint = `/api/v1/employees/${id}`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+  delete: (id) => {
+    const endpoint = `/api/v1/employees/${id}`;
+    return apiCall(API_METHOD.DELETE, endpoint);
+  },
+};
+
+// Ca làm việc (/api/v1/shifts) — mở/đóng ca, tiền quỹ.
+export const ShiftApi = {
+  search: (params, signal) => {
+    const endpoint = `/api/v1/shifts/search`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+  open: (payload) => {
+    const endpoint = `/api/v1/shifts/open`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  detail: (id) => {
+    const endpoint = `/api/v1/shifts/${id}/detail`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  close: (id, payload) => {
+    const endpoint = `/api/v1/shifts/${id}/close`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
   },
 };
 
