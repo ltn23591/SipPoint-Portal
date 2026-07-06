@@ -65,10 +65,39 @@ export const ROLE_OPTIONS = Object.entries(ROLE_LABEL).map(([value, label]) => (
   label,
 }));
 
-// ─── Order status ─────────────────────────────────────────────────────────────
-// Enum dạng UPPERCASE string theo tài liệu API (M1 - Đơn hàng).
-// Tài liệu kanban có 4 cột PENDING/PREPARING/READY/COMPLETED; CONFIRMED giữ lại
-// như một bước nghiệp vụ trung gian (xác nhận trước khi pha chế).
+export const ACCOUNT_STATUS_LABEL = {
+  active: "Đang hoạt động",
+  inactive: "Ngưng hoạt động",
+  locked: "Đã khoá",
+  pending: "Chờ kích hoạt",
+};
+
+export const ACCOUNT_STATUS_VARIANT = {
+  active: "success",
+  inactive: "secondary",
+  locked: "destructive",
+  pending: "warning",
+};
+
+export const ACCOUNT_TYPE_LABEL = {
+  employee: "Nhân viên",
+  customer: "Khách hàng",
+};
+
+export const PERMISSION_LABEL = {
+  manage_store: "Quản lý cửa hàng",
+  manage_staff: "Quản lý nhân viên",
+  manage_products: "Quản lý sản phẩm",
+  view_reports: "Xem báo cáo",
+  manage_orders: "Quản lý đơn hàng",
+  manage_customers: "Quản lý khách hàng",
+  manage_promotions: "Quản lý khuyến mãi",
+  view_order: "Xem đơn hàng",
+  create_order: "Tạo đơn hàng",
+  payment: "Thanh toán",
+  complete_drink: "Hoàn tất pha chế",
+};
+
 export const ORDER_STATUS = {
   PENDING: "PENDING",
   CONFIRMED: "CONFIRMED",
@@ -76,6 +105,7 @@ export const ORDER_STATUS = {
   READY: "READY",
   COMPLETED: "COMPLETED",
   CANCELLED: "CANCELLED",
+  REFUNDED: "REFUNDED",
 };
 
 export const ORDER_STATUS_LABEL = {
@@ -85,6 +115,7 @@ export const ORDER_STATUS_LABEL = {
   [ORDER_STATUS.READY]: "Sẵn sàng",
   [ORDER_STATUS.COMPLETED]: "Hoàn tất",
   [ORDER_STATUS.CANCELLED]: "Đã huỷ",
+  [ORDER_STATUS.REFUNDED]: "Đã hoàn trả",
 };
 
 // Màu theo tài liệu: PENDING=amber, PREPARING=blue, READY=teal, COMPLETED=green, CANCELLED=red.
@@ -95,13 +126,27 @@ export const ORDER_STATUS_VARIANT = {
   [ORDER_STATUS.READY]: "success",
   [ORDER_STATUS.COMPLETED]: "success",
   [ORDER_STATUS.CANCELLED]: "destructive",
+  [ORDER_STATUS.REFUNDED]: "destructive",
+};
+
+export const CAMPAIGN_STATUS = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  FINISHED: "FINISHED",
+  CANCELLED: "CANCELLED",
+};
+
+export const CAMPAIGN_STATUS_LABEL = {
+  [CAMPAIGN_STATUS.DRAFT]: "Nháp",
+  [CAMPAIGN_STATUS.ACTIVE]: "Đang chạy",
+  [CAMPAIGN_STATUS.FINISHED]: "Đã kết thúc",
+  [CAMPAIGN_STATUS.CANCELLED]: "Đã huỷ",
 };
 
 export const ORDER_STATUS_OPTIONS = Object.entries(ORDER_STATUS_LABEL).map(
   ([value, label]) => ({ value, label })
 );
 
-// ─── Order type ───────────────────────────────────────────────────────────────
 export const ORDER_TYPE = {
   DINE_IN: "dine_in",
   TAKEAWAY: "takeaway",
@@ -118,7 +163,6 @@ export const ORDER_TYPE_OPTIONS = Object.entries(ORDER_TYPE_LABEL).map(
   ([value, label]) => ({ value, label })
 );
 
-// ─── Product status ───────────────────────────────────────────────────────────
 export const PRODUCT_STATUS = {
   ACTIVE: "active",
   INACTIVE: "inactive",
@@ -135,7 +179,6 @@ export const PRODUCT_STATUS_OPTIONS = Object.entries(PRODUCT_STATUS_LABEL).map(
   ([value, label]) => ({ value, label })
 );
 
-// ─── Table status ─────────────────────────────────────────────────────────────
 export const TABLE_STATUS = {
   AVAILABLE: "available",
   OCCUPIED: "occupied",
@@ -153,3 +196,27 @@ export const TABLE_STATUS_LABEL = {
 export const TABLE_STATUS_OPTIONS = Object.entries(TABLE_STATUS_LABEL).map(
   ([value, label]) => ({ value, label })
 );
+
+export const ACTIVE_STATUS = {
+  ACTIVE: "active",
+  INACTIVE: "inactive",
+};
+
+export const ACTIVE_STATUS_LABEL = {
+  [ACTIVE_STATUS.ACTIVE]: "Đang hoạt động",
+  [ACTIVE_STATUS.INACTIVE]: "Ngưng hoạt động",
+};
+
+export const ACTIVE_STATUS_OPTIONS = Object.entries(ACTIVE_STATUS_LABEL).map(
+  ([value, label]) => ({ value, label })
+);
+
+export const SHIFT_STATUS = {
+  OPEN: "OPEN",
+  CLOSED: "CLOSED",
+};
+
+export const SHIFT_STATUS_LABEL = {
+  [SHIFT_STATUS.OPEN]: "Đang mở",
+  [SHIFT_STATUS.CLOSED]: "Đã đóng",
+};

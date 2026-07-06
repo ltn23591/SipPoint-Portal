@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/input-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
+import { AuthenticationApi } from "@/apis";
 import { CODE_KEY } from "@/constants/application";
 
 const schema = z.object({
@@ -42,30 +43,34 @@ export default function Login() {
   const onSubmit = async (values) => {
     setLoading(true);
     try {
-      // TODO: thay bằng AuthenticationApi.login(values) khi có backend.
-      // Response kỳ vọng: { data: { user, accessToken, refreshToken } }
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      const mockUser = {
-        _id: "665f1a2b3c4d5e6f7a8b0001",
-        fullName: "Admin SipPoint",
+      const res = await AuthenticationApi.login({
         email: values.email,
-        role: "ADMIN",
-      };
-      login({
-        user: mockUser,
-        token: "demo-access-" + Math.random().toString(36).slice(2),
-        refreshToken: "demo-refresh-" + Math.random().toString(36).slice(2),
+        password: values.password,
       });
-      toast.success("Đăng nhập thành công");
-    } catch (err) {
-      const status = err?.response?.status;
-      if (status === CODE_KEY.BAD_REQUEST) {
-        toast.error("Thông tin không hợp lệ. Vui lòng kiểm tra lại.");
-      } else if (status === CODE_KEY.UNAUTHORIZED_STATUS) {
-        toast.error("Sai email hoặc mật khẩu.");
-      } else {
-        toast.error(err?.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại.");
+
+      if (!res) {
+        toast.error("Không thể kết nối máy chủ. Vui lòng thử lại.");
+        return;
       }
+
+      const body = res.data;
+      if (res.status === CODE_KEY.BAD_REQUEST) {
+        toast.error(body?.message || "Thông tin không hợp lệ. Vui lòng kiểm tra lại.");
+        return;
+      }
+      if (res.status === CODE_KEY.UNAUTHORIZED_STATUS) {
+        toast.error(body?.message || "Sai email hoặc mật khẩu.");
+        return;
+      }
+
+      if (body?.success && body?.token) {
+        login({ user: body.data, token: body.token });
+        toast.success(body.message || "Đăng nhập thành công");
+      } else {
+        toast.error(body?.message || "Đăng nhập thất bại. Vui lòng thử lại.");
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }

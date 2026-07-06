@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router";
 import { useAuthStore } from "@/stores/authStore";
+import { AuthenticationApi } from "@/apis";
 import { ROUTE_PATH } from "@/constants/routePaths";
 import { STORAGE_KEY } from "@/constants/application";
 import { storage } from "@/helpers/storage";
@@ -19,9 +20,15 @@ export function useAuth() {
     navigate(ROUTE_PATH.DASHBOARD, { replace: true });
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await AuthenticationApi.logout();
+    } catch {
+      // bỏ qua lỗi mạng khi đăng xuất
+    }
     storage.remove(STORAGE_KEY.ACCESS_TOKEN);
     storage.remove(STORAGE_KEY.REFRESH_TOKEN);
+    storage.remove(STORAGE_KEY.USER_INFO);
     logoutStore();
     navigate(ROUTE_PATH.LOGIN, { replace: true });
   };
