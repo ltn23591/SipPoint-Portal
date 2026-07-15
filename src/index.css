@@ -10,38 +10,38 @@
 
 @layer base {
   :root {
-    /* SipPoint palette: amber primary / brown secondary / cyan tertiary / slate neutral */
-    --background: 210 40% 98%;
-    --background-secondary: 210 40% 96%;
-    --foreground: 25 71% 14%; /* deep brown for text */
+    /* SipPoint palette (per logo): teal primary / coffee-brown secondary / light-teal tertiary / slate neutral */
+    --background: 190 40% 98%;
+    --background-secondary: 190 35% 95%;
+    --foreground: 200 30% 15%; /* soft blue-black for text */
 
     --card: 0 0% 100%;
-    --card-foreground: 25 71% 14%;
-    --card-shadow: 25 71% 14%;
+    --card-foreground: 200 30% 15%;
+    --card-shadow: 200 30% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 25 71% 14%;
+    --popover-foreground: 200 30% 15%;
 
-    /* Primary - #F59E0B (amber) */
-    --primary: 38 92% 50%;
-    --primary-light: 43 96% 62%;
-    --primary-dark: 32 95% 44%;
+    /* Primary - #2F7E8C (logo teal) */
+    --primary: 192 50% 37%;
+    --primary-light: 192 45% 48%;
+    --primary-dark: 192 55% 28%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - #3B1F0A (deep brown) */
-    --secondary: 25 71% 14%;
+    /* Secondary - #6B4A2F (logo coffee brown) */
+    --secondary: 27 39% 30%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 215 16% 92%;
     --muted-foreground: 215 16% 47%; /* #64748B slate */
 
-    /* Accent - #19BDFF (cyan tertiary) */
-    --accent: 196 100% 55%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent - #8FBFC9 (light teal, logo steam) */
+    --accent: 190 45% 65%;
+    --accent-foreground: 200 30% 15%;
 
     /* Tertiary alias of accent for clarity */
-    --tertiary: 196 100% 55%;
-    --tertiary-foreground: 0 0% 100%;
+    --tertiary: 190 45% 65%;
+    --tertiary-foreground: 200 30% 15%;
 
     --neutral: 215 16% 47%;
     --neutral-foreground: 0 0% 100%;
@@ -58,13 +58,13 @@
     --info: 196 100% 55%;
     --info-foreground: 0 0% 100%;
 
-    --border: 214 25% 89%;
-    --input: 210 40% 96%;
-    --ring: 38 92% 50%;
+    --border: 200 25% 89%;
+    --input: 190 35% 95%;
+    --ring: 192 50% 37%;
 
     /* Order status colors (per dashboard mockup) */
     --status-pending: 38 92% 50%;       /* amber */
-    --status-confirmed: 196 100% 55%;   /* cyan */
+    --status-confirmed: 192 50% 42%;    /* teal */
     --status-preparing: 25 71% 30%;     /* brown */
     --status-completed: 142 71% 38%;    /* green */
     --status-cancelled: 0 72% 51%;      /* red */
@@ -72,27 +72,27 @@
     /* Gradients */
     --gradient-primary: linear-gradient(
       135deg,
-      hsl(43 96% 62%) 0%,
-      hsl(32 95% 44%) 100%
+      hsl(192 45% 48%) 0%,
+      hsl(192 55% 28%) 100%
     );
     --gradient-background: linear-gradient(
       135deg,
-      hsl(210 40% 98%) 0%,
-      hsl(210 40% 96%) 100%
+      hsl(190 40% 98%) 0%,
+      hsl(190 35% 95%) 100%
     );
     --gradient-card: linear-gradient(
       135deg,
       hsl(0 0% 100%) 0%,
-      hsl(210 40% 99%) 100%
+      hsl(190 40% 99%) 100%
     );
 
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(25 71% 14% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(25 71% 14% / 0.08),
-      0 2px 4px -2px hsl(25 71% 14% / 0.08);
-    --shadow-lg: 0 10px 15px -3px hsl(25 71% 14% / 0.08),
-      0 4px 6px -4px hsl(25 71% 14% / 0.08);
-    --shadow-glow: 0 0 20px hsl(38 92% 50% / 0.3);
+    --shadow-sm: 0 1px 2px 0 hsl(200 30% 15% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(200 30% 15% / 0.08),
+      0 2px 4px -2px hsl(200 30% 15% / 0.08);
+    --shadow-lg: 0 10px 15px -3px hsl(200 30% 15% / 0.08),
+      0 4px 6px -4px hsl(200 30% 15% / 0.08);
+    --shadow-glow: 0 0 20px hsl(192 50% 37% / 0.3);
 
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -100,54 +100,54 @@
 
     --radius: 0.75rem;
 
-    /* Sidebar - deep brown like dashboard mockup */
-    --sidebar-background: 25 71% 10%;
-    --sidebar-foreground: 30 20% 88%;
-    --sidebar-primary: 38 92% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 25 50% 18%;
+    /* Sidebar - deep teal per logo */
+    --sidebar-background: 195 45% 16%;
+    --sidebar-foreground: 190 30% 90%;
+    --sidebar-primary: 190 45% 65%;
+    --sidebar-primary-foreground: 200 30% 15%;
+    --sidebar-accent: 195 40% 24%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 25 50% 18%;
-    --sidebar-ring: 38 92% 50%;
+    --sidebar-border: 195 40% 24%;
+    --sidebar-ring: 190 45% 65%;
   }
 
   .dark {
-    --background: 25 71% 8%;
-    --foreground: 30 20% 95%;
+    --background: 200 35% 10%;
+    --foreground: 190 25% 95%;
 
-    --card: 25 71% 12%;
-    --card-foreground: 30 20% 95%;
+    --card: 200 30% 14%;
+    --card-foreground: 190 25% 95%;
 
-    --popover: 25 71% 12%;
-    --popover-foreground: 30 20% 95%;
+    --popover: 200 30% 14%;
+    --popover-foreground: 190 25% 95%;
 
-    --primary: 38 92% 50%;
-    --primary-foreground: 25 71% 8%;
+    --primary: 192 45% 48%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 25 50% 18%;
-    --secondary-foreground: 30 20% 95%;
+    --secondary: 27 35% 45%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 25 50% 18%;
+    --muted: 200 25% 18%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 196 100% 55%;
-    --accent-foreground: 25 71% 8%;
+    --accent: 190 45% 65%;
+    --accent-foreground: 200 35% 10%;
 
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 30 20% 95%;
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 190 25% 95%;
 
-    --border: 25 50% 18%;
-    --input: 25 50% 18%;
-    --ring: 38 92% 50%;
+    --border: 200 25% 18%;
+    --input: 200 25% 18%;
+    --ring: 192 45% 48%;
 
-    --sidebar-background: 25 71% 6%;
-    --sidebar-foreground: 30 20% 88%;
-    --sidebar-primary: 38 92% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 25 50% 14%;
-    --sidebar-accent-foreground: 30 20% 95%;
-    --sidebar-border: 25 50% 14%;
-    --sidebar-ring: 38 92% 50%;
+    --sidebar-background: 200 40% 8%;
+    --sidebar-foreground: 190 30% 88%;
+    --sidebar-primary: 190 45% 65%;
+    --sidebar-primary-foreground: 200 30% 15%;
+    --sidebar-accent: 200 30% 14%;
+    --sidebar-accent-foreground: 190 25% 95%;
+    --sidebar-border: 200 30% 14%;
+    --sidebar-ring: 190 45% 65%;
   }
 }
 

@@ -1,8 +1,23 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { Eye, Pencil, RefreshCw, Plus, Search } from "lucide-react";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { Eye, Pencil, Trash2, Plus, Search } from "lucide-react";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
@@ -12,52 +27,89 @@ import {
 import { DataTable } from "@/components/common/DataTable";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { PageHeader } from "@/components/common/PageHeader";
-import { cn } from "@/lib/utils";
-import { PRODUCT_STATUS_LABEL } from "@/constants/application";
+import { useDebounce } from "@/hooks/useDebounce";
+import { formatVND, formatNumber } from "@/helpers/format";
 import { ROUTE_PATH } from "@/constants/routePaths";
-import { MOCK_MENU_ITEMS } from "./mockData";
-import {
-  CATEGORY_TABS,
-  MENU_CATEGORY_LABEL,
-  STATUS_CHANGE_CYCLES,
-  STATUS_CHANGE_LABEL,
-  TEXT,
-} from "./constants";
+import { CategoryApi, ProductsApi } from "@/apis";
+import { ALL_CATEGORIES, TEXT } from "./constants";
 
-const STATUS_VARIANT = {
-  active: "success",
-  inactive: "secondary",
-  out_of_stock: "destructive",
-};
+const isProductActive = (p) => p?.isActive === "active" || p?.isActive === true;
 
-const formatPrice = (n) => `${Number(n).toLocaleString("vi-VN")}đ`;
+function parseList(body) {
+  const list = body?.data || [];
+  const total =
+    body?.total ??
+    body?.totalCount ??
+    body?.count ??
+    body?.pagination?.total ??
+    body?.pagination?.totalItems ??
+    list.length;
+  return { list, total };
+}
 
 export default function Menu() {
   const navigate = useNavigate();
-  const [items, setItems] = useState(MOCK_MENU_ITEMS);
-  const [category, setCategory] = useState("all");
-  const [search, setSearch] = useState("");
+  const qc = useQueryClient();
+
+  const [searchInput, setSearchInput] = useState("");
+  const keyword = useDebounce(searchInput, 400);
+  const [category, setCategory] = useState(ALL_CATEGORIES);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [statusDialog, setStatusDialog] = useState({ open: false, item: null });
+  const [deleting, setDeleting] = useState(null);
 
-  const filtered = items.filter((i) => {
-    if (category !== "all" && i.category !== category) return false;
-    if (search && !i.name.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const res = await CategoryApi.getAll();
+      return res?.data?.success ? res.data.data || [] : [];
+    },
+    staleTime: 5 * 60_000,
   });
 
-  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const params = useMemo(
+    () => ({
+      page,
+      limit: pageSize,
+      ...(keyword ? { keyword } : {}),
+      ...(category !== ALL_CATEGORIES ? { category } : {}),
+    }),
+    [page, pageSize, keyword, category]
+  );
 
-  const handleStatusChange = () => {
-    const { item } = statusDialog;
-    const next = STATUS_CHANGE_CYCLES[item.status];
-    if (!next) return;
-    setItems((prev) =>
-      prev.map((m) => (m.id === item.id ? { ...m, status: next } : m))
-    );
-    setStatusDialog({ open: false, item: null });
-  };
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["products", params],
+    queryFn: async ({ signal }) => {
+      const res = await ProductsApi.getAll(params, signal);
+      if (!res?.data?.success) {
+        throw new Error(res?.data?.message || "Không tải được danh sách món.");
+      }
+      return parseList(res.data);
+    },
+    placeholderData: keepPreviousData,
+  });
+
+  const products = data?.list ?? [];
+  const total = data?.total ?? 0;
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      const res = await ProductsApi.delete(id);
+      if (!res?.data?.success) {
+        throw new Error(res?.data?.message || "Xoá món thất bại.");
+      }
+      return res.data;
+    },
+    onSuccess: (res) => {
+      toast.success(res?.message || "Đã xoá món.");
+      qc.invalidateQueries({ queryKey: ["products"] });
+      setDeleting(null);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const goDetail = (id, mode) =>
+    navigate(ROUTE_PATH.MENU_DETAIL.replace(":id", id), { state: { mode } });
 
   const columns = [
     {
@@ -66,8 +118,16 @@ export default function Menu() {
       minWidth: 200,
       render: (row) => (
         <div className="flex items-center gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-xs text-muted-foreground">
-            ☕
+          <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-xs text-muted-foreground">
+            {typeof row.image === "string" && row.image.startsWith("http") ? (
+              <img
+                src={row.image}
+                alt={row.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              "☕"
+            )}
           </div>
           <span className="font-medium text-foreground">{row.name}</span>
         </div>
@@ -76,10 +136,10 @@ export default function Menu() {
     {
       key: "category",
       title: TEXT.colCategory,
-      width: 140,
+      width: 160,
       render: (row) => (
         <span className="text-sm text-muted-foreground">
-          {MENU_CATEGORY_LABEL[row.category] ?? row.category}
+          {row.category?.name || "—"}
         </span>
       ),
     },
@@ -89,18 +149,33 @@ export default function Menu() {
       width: 120,
       align: "right",
       render: (row) => (
-        <span className="font-medium text-foreground">{formatPrice(row.price)}</span>
+        <span className="font-medium text-foreground">{formatVND(row.price)}</span>
       ),
+    },
+    {
+      key: "stock",
+      title: TEXT.colStock,
+      width: 100,
+      align: "right",
+      render: (row) =>
+        row.stock == null ? (
+          <span className="text-muted-foreground">—</span>
+        ) : (
+          formatNumber(row.stock)
+        ),
     },
     {
       key: "status",
       title: TEXT.colStatus,
       width: 130,
-      render: (row) => (
-        <Badge variant={STATUS_VARIANT[row.status]}>
-          {PRODUCT_STATUS_LABEL[row.status]}
-        </Badge>
-      ),
+      render: (row) =>
+        isProductActive(row) ? (
+          <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            Đang bán
+          </Badge>
+        ) : (
+          <Badge variant="secondary">Tạm ngưng</Badge>
+        ),
     },
     {
       key: "actions",
@@ -116,11 +191,7 @@ export default function Menu() {
                   variant="ghost"
                   size="icon-sm"
                   className="size-8 text-muted-foreground hover:text-foreground"
-                  onClick={() =>
-                    navigate(ROUTE_PATH.MENU_DETAIL.replace(":id", row.id), {
-                      state: { mode: "view" },
-                    })
-                  }
+                  onClick={() => goDetail(row._id, "view")}
                 >
                   <Eye className="size-4" />
                 </Button>
@@ -134,11 +205,7 @@ export default function Menu() {
                   variant="ghost"
                   size="icon-sm"
                   className="size-8 text-muted-foreground hover:text-foreground"
-                  onClick={() =>
-                    navigate(ROUTE_PATH.MENU_DETAIL.replace(":id", row.id), {
-                      state: { mode: "edit" },
-                    })
-                  }
+                  onClick={() => goDetail(row._id, "edit")}
                 >
                   <Pencil className="size-4" />
                 </Button>
@@ -151,13 +218,13 @@ export default function Menu() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="size-8 text-muted-foreground hover:text-foreground"
-                  onClick={() => setStatusDialog({ open: true, item: row })}
+                  className="size-8 text-destructive hover:text-destructive"
+                  onClick={() => setDeleting(row)}
                 >
-                  <RefreshCw className="size-4" />
+                  <Trash2 className="size-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">{TEXT.changeStatus}</TooltipContent>
+              <TooltipContent side="top">{TEXT.delete}</TooltipContent>
             </Tooltip>
           </div>
         </TooltipProvider>
@@ -171,7 +238,7 @@ export default function Menu() {
         title={TEXT.pageTitle}
         description={TEXT.pageDesc}
         actions={
-          <Button size="sm">
+          <Button size="sm" onClick={() => goDetail("new", "create")}>
             <Plus className="size-4" />
             {TEXT.addItem}
           </Button>
@@ -179,33 +246,36 @@ export default function Menu() {
       />
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* Category tabs */}
-        <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-1">
-          {CATEGORY_TABS.map((tab) => (
-            <button
-              key={tab.value}
-              type="button"
-              onClick={() => { setCategory(tab.value); setPage(1); }}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                category === tab.value
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Select
+          value={category}
+          onValueChange={(v) => {
+            setCategory(v);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="h-8 w-48">
+            <SelectValue placeholder={TEXT.allCategories} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_CATEGORIES}>{TEXT.allCategories}</SelectItem>
+            {categories.map((c) => (
+              <SelectItem key={c._id} value={c._id}>
+                {c.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-        {/* Search */}
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            value={searchInput}
+            onChange={(e) => {
+              setSearchInput(e.target.value);
+              setPage(1);
+            }}
             placeholder={TEXT.searchPlaceholder}
             className="h-8 w-56 rounded-md border border-input bg-background pl-8 pr-3 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
@@ -215,31 +285,29 @@ export default function Menu() {
       {/* Table */}
       <DataTable
         columns={columns}
-        dataSource={paginated}
-        rowKey="id"
-        total={filtered.length}
+        dataSource={products}
+        rowKey="_id"
+        loading={isLoading}
+        total={total}
         pageIndex={page}
         pageSize={pageSize}
-        onChange={(p, ps) => { setPage(p); setPageSize(ps); }}
+        onChange={(p, ps) => {
+          setPage(p);
+          setPageSize(ps);
+        }}
         heightOffset={220}
+        empty={isError ? TEXT.loadError : TEXT.empty}
       />
 
-      {/* Status confirm dialog */}
       <ConfirmDialog
-        open={statusDialog.open}
-        onOpenChange={(open) => setStatusDialog((s) => ({ ...s, open }))}
-        title={TEXT.confirmStatusTitle}
-        description={
-          statusDialog.item
-            ? TEXT.confirmStatusDesc(
-                statusDialog.item.name,
-                STATUS_CHANGE_LABEL[statusDialog.item.status]
-              )
-            : ""
-        }
-        confirmText={TEXT.confirmYes}
-        cancelText={TEXT.confirmNo}
-        onConfirm={handleStatusChange}
+        open={!!deleting}
+        onOpenChange={(v) => !v && setDeleting(null)}
+        title={TEXT.confirmDeleteTitle}
+        description={deleting ? TEXT.confirmDeleteDesc(deleting.name) : ""}
+        confirmText={TEXT.delete}
+        variant="destructive"
+        loading={deleteMutation.isPending}
+        onConfirm={() => deleteMutation.mutate(deleting._id)}
       />
     </div>
   );

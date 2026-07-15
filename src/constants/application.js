@@ -2,7 +2,6 @@
 export const APP_NAME = "SipPoint";
 export const APP_TAGLINE = "Quản lý cửa hàng";
 
-// ─── HTTP / API ───────────────────────────────────────────────────────────────
 export const CODE_KEY = {
   BAD_REQUEST: 400,
   UNAUTHORIZED_STATUS: 401,

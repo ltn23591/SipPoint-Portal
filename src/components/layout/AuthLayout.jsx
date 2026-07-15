@@ -1,16 +1,14 @@
 import { Outlet } from "react-router";
-import { Coffee } from "lucide-react";
 
 import { APP_NAME, APP_TAGLINE } from "@/constants/application";
+import logoSippoint from "@/assets/logo_sippoint.png";
 
 export function AuthLayout() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-10">
       <div className="w-full max-w-md space-y-6">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-glow">
-            <Coffee className="size-7" />
-          </div>
+        <div className="text-center">
+          <img src={logoSippoint} alt="Logo" className="mx-auto h-10 w-auto" />
           <div>
             <p className="text-2xl font-bold text-secondary">{APP_NAME}</p>
             <p className="text-sm text-muted-foreground">{APP_TAGLINE}</p>

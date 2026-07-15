@@ -1,65 +1,40 @@
-import { PRODUCT_STATUS } from "@/constants/application";
-
-export const MENU_CATEGORY = {
-  COFFEE: "coffee",
-  TEA: "tea",
-  FOOD: "food",
-  OTHER: "other",
-};
-
-export const MENU_CATEGORY_LABEL = {
-  [MENU_CATEGORY.COFFEE]: "Cà phê",
-  [MENU_CATEGORY.TEA]: "Trà",
-  [MENU_CATEGORY.FOOD]: "Bánh & đồ ăn",
-  [MENU_CATEGORY.OTHER]: "Khác",
-};
-
-export const MENU_CATEGORY_OPTIONS = Object.entries(MENU_CATEGORY_LABEL).map(
-  ([value, label]) => ({ value, label })
-);
-
-export const CATEGORY_TABS = [
-  { value: "all", label: "Tất cả" },
-  ...MENU_CATEGORY_OPTIONS,
-];
-
-export const STATUS_CHANGE_CYCLES = {
-  [PRODUCT_STATUS.ACTIVE]: PRODUCT_STATUS.INACTIVE,
-  [PRODUCT_STATUS.INACTIVE]: PRODUCT_STATUS.ACTIVE,
-  [PRODUCT_STATUS.OUT_OF_STOCK]: PRODUCT_STATUS.ACTIVE,
-};
-
-export const STATUS_CHANGE_LABEL = {
-  [PRODUCT_STATUS.ACTIVE]: "Tạm ngưng bán",
-  [PRODUCT_STATUS.INACTIVE]: "Mở bán lại",
-  [PRODUCT_STATUS.OUT_OF_STOCK]: "Đánh dấu còn hàng",
-};
+export const ALL_CATEGORIES = "__all__";
 
 export const TEXT = {
   pageTitle: "Thực đơn",
   pageDesc: "Quản lý danh sách món, giá và trạng thái.",
   addItem: "Thêm món",
   searchPlaceholder: "Tìm theo tên món...",
+  allCategories: "Tất cả danh mục",
   colName: "Tên món",
   colCategory: "Danh mục",
   colPrice: "Giá bán",
+  colStock: "Tồn kho",
   colStatus: "Trạng thái",
   colActions: "Thao tác",
   viewDetail: "Xem chi tiết",
   edit: "Chỉnh sửa",
-  changeStatus: "Đổi trạng thái",
-  confirmStatusTitle: "Xác nhận đổi trạng thái",
-  confirmStatusDesc: (name, label) => `Xác nhận "${label}" cho món "${name}"?`,
+  delete: "Xoá",
+  confirmDeleteTitle: "Xoá món",
+  confirmDeleteDesc: (name) =>
+    `Bạn có chắc muốn xoá món "${name}"? Hành động này không thể hoàn tác.`,
   confirmYes: "Xác nhận",
   confirmNo: "Huỷ",
+  createTitle: "Thêm món mới",
   detailTitle: "Chi tiết món",
   editTitle: "Chỉnh sửa món",
   fieldName: "Tên món",
   fieldCategory: "Danh mục",
   fieldPrice: "Giá bán (đ)",
+  fieldStock: "Tồn kho",
+  fieldImage: "Ảnh (URL hoặc Public ID)",
   fieldDescription: "Mô tả",
   fieldStatus: "Trạng thái",
   back: "Quay lại",
   save: "Lưu thay đổi",
+  create: "Tạo mới",
   cancel: "Huỷ",
+  notFound: "Không tìm thấy món này.",
+  loadError: "Không tải được dữ liệu.",
+  empty: "Chưa có món nào.",
 };
