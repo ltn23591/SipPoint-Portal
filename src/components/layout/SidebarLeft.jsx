@@ -1,10 +1,11 @@
-import { Coffee, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { MENU_ITEMS } from "@/constants/menuItems";
 import { APP_NAME, APP_TAGLINE } from "@/constants/application";
 import { useUiStore } from "@/stores/uiStore";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import logoSippoint from "@/assets/logo_sippoint.png";
 import { SidebarItem } from "./SidebarItem";
 
 export function SidebarLeft() {
@@ -29,8 +30,11 @@ export function SidebarLeft() {
           collapsed ? "justify-center px-2" : "px-5"
         )}
       >
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary">
-          <Coffee className="size-5" />
+        <div className="flex size-15 shrink-0 items-center justify-center rounded-xl bg-white/95 p-1.5">
+          <img src={logoSippoint} alt="Logo" className="h-full w-full object-contain" />
+        </div>
+        <div>
+          |
         </div>
         {!collapsed && (
           <div className="leading-tight">

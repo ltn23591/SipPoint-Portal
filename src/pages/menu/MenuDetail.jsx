@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Pencil, Loader2, Upload, ImagePlus } from "lucide-react";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,40 +13,198 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PRODUCT_STATUS_LABEL, PRODUCT_STATUS_OPTIONS } from "@/constants/application";
 import { ROUTE_PATH } from "@/constants/routePaths";
-import { MOCK_MENU_ITEMS } from "./mockData";
-import { MENU_CATEGORY_LABEL, MENU_CATEGORY_OPTIONS, TEXT } from "./constants";
+import { CategoryApi, ProductsApi, UploadApi } from "@/apis";
+import { TEXT } from "./constants";
 
-const STATUS_VARIANT = {
-  active: "success",
-  inactive: "secondary",
-  out_of_stock: "destructive",
+const UPLOAD_FOLDER = "products";
+const MAX_IMAGE_MB = 5;
+
+const pickImageValue = (data) =>
+  data?.secureUrl ||
+  data?.secure_url ||
+  data?.url ||
+  data?.imageUrl ||
+  data?.publicId ||
+  data?.public_id ||
+  "";
+
+const STATUS_OPTIONS = [
+  { value: "active", label: "Đang bán" },
+  { value: "inactive", label: "Tạm ngưng" },
+];
+
+const normalizeStatus = (v) => (v === "active" || v === true ? "active" : "inactive");
+
+const EMPTY = {
+  name: "",
+  category: "",
+  price: "",
+  stock: "",
+  image: "",
+  description: "",
+  isActive: "active",
 };
 
-function Field({ label, children }) {
+function Field({ label, required, children }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-muted-foreground">{label}</label>
+      <label className="text-sm font-medium text-muted-foreground">
+        {label}
+        {required ? <span className="text-destructive"> *</span> : null}
+      </label>
       {children}
     </div>
   );
 }
 
+const inputCls =
+  "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50";
+
 export default function MenuDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const initialMode = location.state?.mode ?? "view";
+  const qc = useQueryClient();
 
-  const original = MOCK_MENU_ITEMS.find((m) => m.id === id);
-  const [mode, setMode] = useState(initialMode);
-  const [form, setForm] = useState(original ?? {});
+  const isCreate = id === "new";
+  const [mode, setMode] = useState(
+    isCreate ? "create" : location.state?.mode ?? "view"
+  );
+  const readOnly = mode === "view";
 
-  if (!original) {
+  const [form, setForm] = useState(EMPTY);
+  const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const res = await CategoryApi.getAll();
+      return res?.data?.success ? res.data.data || [] : [];
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  const {
+    data: product,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["product", id],
+    enabled: !isCreate,
+    queryFn: async () => {
+      const res = await ProductsApi.getById(id);
+      if (!res?.data?.success) {
+        throw new Error(res?.data?.message || TEXT.notFound);
+      }
+      return res.data.data;
+    },
+  });
+
+  useEffect(() => {
+    if (isCreate) {
+      setForm(EMPTY);
+      return;
+    }
+    if (product) {
+      setForm({
+        name: product.name ?? "",
+        category: product.category?._id ?? product.category ?? "",
+        price: product.price ?? "",
+        stock: product.stock ?? "",
+        image: product.image ?? "",
+        description: product.description ?? "",
+        isActive: normalizeStatus(product.isActive),
+      });
+    }
+  }, [isCreate, product]);
+
+  const set = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (error) setError("");
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        name: form.name.trim(),
+        description: form.description.trim(),
+        price: Number(form.price),
+        image: form.image.trim(),
+        category: form.category,
+        isActive: form.isActive,
+        ...(form.stock !== "" ? { stock: Number(form.stock) } : {}),
+      };
+      const res = isCreate
+        ? await ProductsApi.create(payload)
+        : await ProductsApi.update(id, payload);
+      if (!res?.data?.success) {
+        throw new Error(res?.data?.message || "Lưu món thất bại.");
+      }
+      return res.data;
+    },
+    onSuccess: (res) => {
+      toast.success(res?.message || (isCreate ? "Đã thêm món." : "Đã cập nhật món."));
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["product", id] });
+      navigate(ROUTE_PATH.MENU);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handleUpload = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Vui lòng chọn tệp ảnh.");
+      return;
+    }
+    if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
+      toast.error(`Ảnh tối đa ${MAX_IMAGE_MB}MB.`);
+      return;
+    }
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("folder", UPLOAD_FOLDER);
+    setUploading(true);
+    try {
+      const res = await UploadApi.cloudinaryFile(fd);
+      if (!res?.data?.success) {
+        throw new Error(res?.data?.message || "Tải ảnh lên thất bại.");
+      }
+      const value = pickImageValue(res.data.data);
+      if (!value) throw new Error("Không nhận được đường dẫn ảnh từ máy chủ.");
+      set("image", value);
+      toast.success("Đã tải ảnh lên.");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSave = () => {
+    if (!form.name.trim()) return setError("Vui lòng nhập tên món.");
+    if (!form.category) return setError("Vui lòng chọn danh mục.");
+    if (form.price === "" || Number(form.price) < 0)
+      return setError("Vui lòng nhập giá bán hợp lệ.");
+    saveMutation.mutate();
+  };
+
+  if (!isCreate && isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-muted-foreground">
+        <Loader2 className="mr-2 size-5 animate-spin" />
+        Đang tải...
+      </div>
+    );
+  }
+
+  if (!isCreate && (isError || !product)) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-        <p>Không tìm thấy món này.</p>
+        <p>{TEXT.notFound}</p>
         <Button variant="link" onClick={() => navigate(ROUTE_PATH.MENU)}>
           {TEXT.back}
         </Button>
@@ -51,14 +212,11 @@ export default function MenuDetail() {
     );
   }
 
-  const readOnly = mode === "view";
-
-  const set = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
-
-  const handleSave = () => {
-    // In real app: call API to update, then navigate back
-    navigate(ROUTE_PATH.MENU);
-  };
+  const title = isCreate
+    ? TEXT.createTitle
+    : readOnly
+    ? TEXT.detailTitle
+    : TEXT.editTitle;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -73,18 +231,14 @@ export default function MenuDetail() {
             <ArrowLeft className="size-4" />
           </Button>
           <div>
-            <h1 className="text-xl font-bold text-secondary">
-              {readOnly ? TEXT.detailTitle : TEXT.editTitle}
-            </h1>
-            <p className="text-sm text-muted-foreground">{original.name}</p>
+            <h1 className="text-xl font-bold text-secondary">{title}</h1>
+            {!isCreate && (
+              <p className="text-sm text-muted-foreground">{product.name}</p>
+            )}
           </div>
         </div>
         {readOnly && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setMode("edit")}
-          >
+          <Button variant="outline" size="sm" onClick={() => setMode("edit")}>
             <Pencil className="mr-1.5 size-3.5" />
             {TEXT.edit}
           </Button>
@@ -92,97 +246,173 @@ export default function MenuDetail() {
       </div>
 
       {/* Form card */}
-      <div className="rounded-xl border bg-card p-6 shadow-sm space-y-5">
-        {/* Image placeholder */}
-        <div className="flex items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 h-40 text-sm text-muted-foreground">
-          Ảnh món (chưa có)
+      <div className="space-y-5 rounded-xl border bg-card p-6 shadow-sm">
+        {/* Image upload / preview */}
+        <div className="space-y-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              handleUpload(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            disabled={readOnly || uploading}
+            onClick={() => fileInputRef.current?.click()}
+            className="group relative flex h-40 w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-muted/30 text-sm text-muted-foreground transition-colors enabled:hover:border-primary/60 enabled:hover:bg-muted/50 disabled:cursor-default"
+          >
+            {typeof form.image === "string" && form.image.startsWith("http") ? (
+              <img
+                src={form.image}
+                alt={form.name}
+                className="h-full w-full object-contain"
+              />
+            ) : (
+              <span className="flex flex-col items-center gap-1.5">
+                <ImagePlus className="size-6" />
+                {readOnly ? "Ảnh món (chưa có)" : "Bấm để chọn ảnh"}
+              </span>
+            )}
+            {uploading && (
+              <span className="absolute inset-0 flex items-center justify-center gap-2 bg-background/70 text-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                Đang tải ảnh...
+              </span>
+            )}
+          </button>
+          {!readOnly && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="mr-1.5 size-3.5" />
+              {form.image ? "Đổi ảnh khác" : "Tải ảnh lên"}
+            </Button>
+          )}
         </div>
 
-        <Field label={TEXT.fieldName}>
+        <Field label={TEXT.fieldName} required>
           <input
             type="text"
-            value={form.name ?? ""}
+            value={form.name}
             disabled={readOnly}
             onChange={(e) => set("name", e.target.value)}
-            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            className={inputCls}
           />
         </Field>
 
         <div className="grid grid-cols-2 gap-4">
-          <Field label={TEXT.fieldCategory}>
+          <Field label={TEXT.fieldCategory} required>
             <Select
-              value={form.category ?? ""}
+              value={form.category || ""}
               onValueChange={(v) => set("category", v)}
               disabled={readOnly}
             >
               <SelectTrigger className="h-9 text-sm">
-                <SelectValue />
+                <SelectValue placeholder="Chọn danh mục" />
               </SelectTrigger>
               <SelectContent>
-                {MENU_CATEGORY_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
+                {categories.map((c) => (
+                  <SelectItem key={c._id} value={c._id}>
+                    {c.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </Field>
 
-          <Field label={TEXT.fieldPrice}>
+          <Field label={TEXT.fieldPrice} required>
             <input
               type="number"
-              value={form.price ?? ""}
+              value={form.price}
               disabled={readOnly}
-              onChange={(e) => set("price", Number(e.target.value))}
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              onChange={(e) => set("price", e.target.value)}
+              className={inputCls}
             />
           </Field>
         </div>
 
-        <Field label={TEXT.fieldStatus}>
-          {readOnly ? (
-            <div className="pt-1">
-              <Badge variant={STATUS_VARIANT[form.status]}>
-                {PRODUCT_STATUS_LABEL[form.status]}
-              </Badge>
-            </div>
-          ) : (
-            <Select
-              value={form.status ?? ""}
-              onValueChange={(v) => set("status", v)}
-            >
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PRODUCT_STATUS_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </Field>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label={TEXT.fieldStock}>
+            <input
+              type="number"
+              value={form.stock}
+              disabled={readOnly}
+              onChange={(e) => set("stock", e.target.value)}
+              className={inputCls}
+            />
+          </Field>
+
+          <Field label={TEXT.fieldStatus}>
+            {readOnly ? (
+              <div className="pt-1">
+                {form.isActive === "active" ? (
+                  <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    Đang bán
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary">Tạm ngưng</Badge>
+                )}
+              </div>
+            ) : (
+              <Select
+                value={form.isActive}
+                onValueChange={(v) => set("isActive", v)}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </Field>
+        </div>
 
         <Field label={TEXT.fieldDescription}>
           <textarea
-            value={form.description ?? ""}
+            value={form.description}
             disabled={readOnly}
             onChange={(e) => set("description", e.target.value)}
             rows={3}
-            className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+            className="flex w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           />
         </Field>
+
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
       </div>
 
       {/* Footer buttons */}
       {!readOnly && (
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => setMode("view")}>
+          <Button
+            variant="outline"
+            disabled={saveMutation.isPending}
+            onClick={() =>
+              isCreate ? navigate(ROUTE_PATH.MENU) : setMode("view")
+            }
+          >
             {TEXT.cancel}
           </Button>
-          <Button onClick={handleSave}>{TEXT.save}</Button>
+          <Button onClick={handleSave} disabled={saveMutation.isPending}>
+            {saveMutation.isPending ? (
+              <Loader2 className="mr-1.5 size-4 animate-spin" />
+            ) : null}
+            {isCreate ? TEXT.create : TEXT.save}
+          </Button>
         </div>
       )}
     </div>

@@ -112,7 +112,7 @@ export const ProductCategoryApi = {
 
 export const ProductApi = {
   create: (payload) => {
-    const endpoint = `/api/v1/product/create`;
+    const endpoint = `/api/v1/products`;
     return apiCall(API_METHOD.POST, endpoint, payload);
   },
   getDetailById: (productId) => {
@@ -120,44 +120,76 @@ export const ProductApi = {
     return apiCall(API_METHOD.GET, endpoint);
   },
   update: (payload) => {
-    const endpoint = `/api/v1/product/update`;
+    const endpoint = `/api/v1/products`;
     return apiCall(API_METHOD.PUT, endpoint, payload);
   },
   search: (payload) => {
-    const endpoint = `/api/v1/product/search`;
+    const endpoint = `/api/v1/products`;
     return apiCall(API_METHOD.POST, endpoint, payload);
   },
   searchWithPagination: (payload, signal) => {
-    const endpoint = `/api/v1/product/search`;
+    const endpoint = `/api/v1/products`;
     return apiCall(API_METHOD.POST, endpoint, payload, null, null, { signal }).then((res) => {
       return preProcessData(res, payload?.pageSize);
     });
   },
   delete: (productId) => {
-    const endpoint = `/api/v1/product/delete/${productId}`;
+    const endpoint = `/api/v1/products/delete/${productId}`;
     return apiCall(API_METHOD.DELETE, endpoint);
   },
   updateActive: (payload) => {
-    const endpoint = `/api/v1/product/update-active`;
+    const endpoint = `/api/v1/products/update-active`;
     return apiCall(API_METHOD.PATCH, endpoint, payload);
   },
   updateMany: (payload) => {
-    const endpoint = `/api/v1/product/update-many`;
+    const endpoint = `/api/v1/products/update-many`;
     return apiCall(API_METHOD.PUT, endpoint, payload);
   },
   importFile: (payload) => {
-    const endpoint = `/api/v1/product/import`;
+    const endpoint = `/api/v1/products/import`;
     return apiCall(API_METHOD.POST, endpoint, payload, {
       "Content-Type": "multipart/form-data",
     });
   },
   getTemplateImport: () => {
-    const endpoint = `/api/v1/product/template/import`;
+    const endpoint = `/api/v1/products/template/import`;
     return apiCall(API_METHOD.GET, endpoint, null, null, null, { responseType: "blob" });
   },
   export: (payload) => {
-    const endpoint = `/api/v1/product/export`;
+    const endpoint = `/api/v1/products/export`;
     return apiCall(API_METHOD.POST, endpoint, payload, null, null, { responseType: "blob" });
+  },
+};
+
+// Sản phẩm / Thực đơn (REST số nhiều: /api/v1/products) — API MỚI theo backend thật.
+// KHÁC ProductApi cũ (RPC scaffold /api/v1/product/*). Cùng tiền lệ CustomersApi vs CustomerApi.
+// getAll nhận query: page, limit, keyword (tìm theo tên), category (ID danh mục).
+export const ProductsApi = {
+  getAll: (params, signal) => {
+    const endpoint = `/api/v1/products`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+  getById: (id) => {
+    const endpoint = `/api/v1/products/${id}`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  create: (payload) => {
+    const endpoint = `/api/v1/products`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  update: (id, payload) => {
+    const endpoint = `/api/v1/products/${id}`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+  delete: (id) => {
+    const endpoint = `/api/v1/products/${id}`;
+    return apiCall(API_METHOD.DELETE, endpoint);
+  },
+  importFile: (payload) => {
+    const endpoint = `/api/v1/products/import`;
+    return apiCall(API_METHOD.POST, endpoint, payload, {
+      "Content-Type": "multipart/form-data",
+    });
   },
 };
 
@@ -881,6 +913,16 @@ export const DocumentApi = {
   deleteFile: (payload) => {
     const endpoint = `/api/v1/document/delete-file`;
     return apiCall(API_METHOD.DELETE, endpoint, payload);
+  },
+};
+
+// Upload ảnh lên Cloudinary — payload là FormData: file (bắt buộc), folder (tuỳ chọn).
+export const UploadApi = {
+  cloudinaryFile: (payload) => {
+    const endpoint = `/api/v1/upload/cloudinary/file`;
+    return apiCall(API_METHOD.POST, endpoint, payload, {
+      "Content-Type": "multipart/form-data",
+    });
   },
 };
 
