@@ -57,13 +57,16 @@ const apiCall = async (
   };
 
   try {
-    const response = await axios({
+    const config = {
       method,
       url,
-      data,
       headers,
       ...(args?.[0] || {}),
-    });
+    };
+    if (data !== null) {
+      config.data = data;
+    }
+    const response = await axios(config);
     return response;
   } catch (error) {
     if (error.response) {
