@@ -36,6 +36,13 @@ const STATUS_OPTIONS = [
 
 const normalizeStatus = (v) => (v === "active" || v === true ? "active" : "inactive");
 
+const DEFAULT_SIZES = [
+  { name: "S", active: false, priceAdjustment: 0 },
+  { name: "M", active: false, priceAdjustment: 0 },
+  { name: "L", active: false, priceAdjustment: 0 },
+  { name: "XL", active: false, priceAdjustment: 0 },
+];
+
 const EMPTY = {
   name: "",
   category: "",
@@ -44,6 +51,7 @@ const EMPTY = {
   image: "",
   description: "",
   isActive: "active",
+  sizes: JSON.parse(JSON.stringify(DEFAULT_SIZES)),
 };
 
 function Field({ label, required, children }) {
@@ -105,10 +113,24 @@ export default function MenuDetail() {
 
   useEffect(() => {
     if (isCreate) {
-      setForm(EMPTY);
+      setForm(JSON.parse(JSON.stringify(EMPTY)));
       return;
     }
     if (product) {
+      const productSizes = product.variants?.filter(v => v.variantType === 'size') || [];
+      const mergedSizes = DEFAULT_SIZES.map(def => {
+        const found = productSizes.find(p => p.name === def.name);
+        if (found) {
+          return { name: def.name, active: true, priceAdjustment: found.priceAdjustment };
+        }
+        return { ...def };
+      });
+      productSizes.forEach(ps => {
+         if (!mergedSizes.find(m => m.name === ps.name)) {
+             mergedSizes.push({ name: ps.name, active: true, priceAdjustment: ps.priceAdjustment });
+         }
+      });
+
       setForm({
         name: product.name ?? "",
         category: product.category?._id ?? product.category ?? "",
@@ -117,6 +139,7 @@ export default function MenuDetail() {
         image: product.image ?? "",
         description: product.description ?? "",
         isActive: normalizeStatus(product.isActive),
+        sizes: mergedSizes,
       });
     }
   }, [isCreate, product]);
@@ -128,6 +151,10 @@ export default function MenuDetail() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      const variants = (form.sizes || [])
+        .filter(s => s.active)
+        .map(s => ({ variantType: "size", name: s.name, priceAdjustment: Number(s.priceAdjustment) || 0 }));
+
       const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
@@ -135,6 +162,7 @@ export default function MenuDetail() {
         image: form.image.trim(),
         category: form.category,
         isActive: form.isActive,
+        variants: variants,
         ...(form.stock !== "" ? { stock: Number(form.stock) } : {}),
       };
       const res = isCreate
@@ -189,6 +217,7 @@ export default function MenuDetail() {
     if (!form.category) return setError("Vui lòng chọn danh mục.");
     if (form.price === "" || Number(form.price) < 0)
       return setError("Vui lòng nhập giá bán hợp lệ.");
+    if (!form.image) return setError("Vui lòng tải lên ảnh món.");
     saveMutation.mutate();
   };
 
@@ -382,7 +411,48 @@ export default function MenuDetail() {
           </Field>
         </div>
 
-        <Field label={TEXT.fieldDescription}>
+        <Field label="Các tuỳ chọn Size">
+          <div className="flex flex-wrap gap-4">
+            {form.sizes?.map((size, idx) => (
+              <div key={size.name} className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant={size.active ? "default" : "outline"}
+                  size="sm"
+                  disabled={readOnly}
+                  className={`h-8 rounded-full px-4 ${size.active ? 'bg-primary' : ''}`}
+                  onClick={() => {
+                    const newSizes = [...form.sizes];
+                    newSizes[idx].active = !newSizes[idx].active;
+                    set("sizes", newSizes);
+                  }}
+                >
+                  {size.name}
+                </Button>
+                {size.active && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-muted-foreground">+</span>
+                    <input
+                      type="number"
+                      placeholder="Giá cộng thêm"
+                      disabled={readOnly}
+                      value={size.priceAdjustment}
+                      onChange={(e) => {
+                        const newSizes = [...form.sizes];
+                        newSizes[idx].priceAdjustment = e.target.value;
+                        set("sizes", newSizes);
+                      }}
+                      className="h-8 w-24 rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    />
+                    <span className="text-xs text-muted-foreground">đ</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </Field>
+
+        <Field label={TEXT.fieldDescription} required>
           <textarea
             value={form.description}
             disabled={readOnly}
