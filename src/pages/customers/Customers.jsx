@@ -122,12 +122,12 @@ export default function Customers() {
 
   const columns = [
     {
-      key: "customerId",
+      key: "id_display",
       title: "Mã KH",
       width: 110,
       render: (c) =>
-        c.customerId ? (
-          <span className="font-mono text-xs text-muted-foreground">{c.customerId}</span>
+        c._id ? (
+          <span className="font-mono text-xs text-muted-foreground">{c._id.slice(-8).toUpperCase()}</span>
         ) : (
           <span className="text-muted-foreground">—</span>
         ),
