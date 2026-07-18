@@ -78,112 +78,6 @@ export const ToppingApi = {
   },
 };
 
-export const ProductCategoryApi = {
-  getAll: () => {
-    const endpoint = `/api/v1/product-category/all`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  getAllActive: () => {
-    const endpoint = `/api/v1/product-category/all-active`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  create: (payload) => {
-    const endpoint = `/api/v1/product-category/create`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  getDetailById: (categoryId) => {
-    const endpoint = `/api/v1/product-category/details/${categoryId}`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  update: (payload) => {
-    const endpoint = `/api/v1/product-category/update`;
-    return apiCall(API_METHOD.PUT, endpoint, payload);
-  },
-  search: (payload) => {
-    const endpoint = `/api/v1/product-category/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  searchWithPagination: (payload, signal) => {
-    const endpoint = `/api/v1/product-category/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload, null, null, { signal }).then((res) => {
-      return preProcessDataWithCustom(res, payload?.pageSize, transferListTreeData);
-    });
-  },
-  delete: (categoryId) => {
-    const endpoint = `/api/v1/product-category/delete/${categoryId}`;
-    return apiCall(API_METHOD.DELETE, endpoint);
-  },
-  updateActive: (payload) => {
-    const endpoint = `/api/v1/product-category/update-active`;
-    return apiCall(API_METHOD.PATCH, endpoint, payload);
-  },
-  importFile: (payload) => {
-    const endpoint = `/api/v1/product-category/import`;
-    return apiCall(API_METHOD.POST, endpoint, payload, {
-      "Content-Type": "multipart/form-data",
-    });
-  },
-  getTemplateImport: () => {
-    const endpoint = `/api/v1/product-category/template/import`;
-    return apiCall(API_METHOD.GET, endpoint, null, null, null, { responseType: "blob" });
-  },
-  export: (payload) => {
-    const endpoint = `/api/v1/product-category/export`;
-    return apiCall(API_METHOD.POST, endpoint, payload, null, null, { responseType: "blob" });
-  },
-};
-
-export const ProductApi = {
-  create: (payload) => {
-    const endpoint = `/api/v1/products`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  getDetailById: (productId) => {
-    const endpoint = `/api/v1/product/details/${productId}`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  update: (payload) => {
-    const endpoint = `/api/v1/products`;
-    return apiCall(API_METHOD.PUT, endpoint, payload);
-  },
-  search: (payload) => {
-    const endpoint = `/api/v1/products`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  searchWithPagination: (payload, signal) => {
-    const endpoint = `/api/v1/products`;
-    return apiCall(API_METHOD.POST, endpoint, payload, null, null, { signal }).then((res) => {
-      return preProcessData(res, payload?.pageSize);
-    });
-  },
-  delete: (productId) => {
-    const endpoint = `/api/v1/products/delete/${productId}`;
-    return apiCall(API_METHOD.DELETE, endpoint);
-  },
-  updateActive: (payload) => {
-    const endpoint = `/api/v1/products/update-active`;
-    return apiCall(API_METHOD.PATCH, endpoint, payload);
-  },
-  updateMany: (payload) => {
-    const endpoint = `/api/v1/products/update-many`;
-    return apiCall(API_METHOD.PUT, endpoint, payload);
-  },
-  importFile: (payload) => {
-    const endpoint = `/api/v1/products/import`;
-    return apiCall(API_METHOD.POST, endpoint, payload, {
-      "Content-Type": "multipart/form-data",
-    });
-  },
-  getTemplateImport: () => {
-    const endpoint = `/api/v1/products/template/import`;
-    return apiCall(API_METHOD.GET, endpoint, null, null, null, { responseType: "blob" });
-  },
-  export: (payload) => {
-    const endpoint = `/api/v1/products/export`;
-    return apiCall(API_METHOD.POST, endpoint, payload, null, null, { responseType: "blob" });
-  },
-};
-
 // Sản phẩm / Thực đơn (REST số nhiều: /api/v1/products) — API MỚI theo backend thật.
 // KHÁC ProductApi cũ (RPC scaffold /api/v1/product/*). Cùng tiền lệ CustomersApi vs CustomerApi.
 // getAll nhận query: page, limit, keyword (tìm theo tên), category (ID danh mục).
@@ -237,69 +131,6 @@ export const ProductPriceApi = {
   },
 };
 
-export const OrderApi = {
-  search: (payload) => {
-    const endpoint = `/api/v1/order/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  searchWithPagination: (payload, signal) => {
-    const endpoint = `/api/v1/order/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload, null, null, { signal }).then((res) => {
-      return preProcessData(res, payload?.pageSize);
-    });
-  },
-  recent: () => {
-    const endpoint = `/api/v1/order/recent`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  create: (payload) => {
-    const endpoint = `/api/v1/order/create`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  update: (payload) => {
-    const endpoint = `/api/v1/order/update`;
-    return apiCall(API_METHOD.PUT, endpoint, payload);
-  },
-  delete: (orderId) => {
-    const endpoint = `/api/v1/order/delete/${orderId}`;
-    return apiCall(API_METHOD.DELETE, endpoint);
-  },
-  getDetailById: (orderId) => {
-    const endpoint = `/api/v1/order/details/${orderId}`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  updateStatus: (payload) => {
-    const endpoint = `/api/v1/order/update-status`;
-    return apiCall(API_METHOD.PATCH, endpoint, payload);
-  },
-  cancel: (orderId) => {
-    const endpoint = `/api/v1/order/cancel/${orderId}`;
-    return apiCall(API_METHOD.PATCH, endpoint);
-  },
-  confirm: (orderId) => {
-    const endpoint = `/api/v1/order/confirm/${orderId}`;
-    return apiCall(API_METHOD.PATCH, endpoint);
-  },
-  complete: (orderId) => {
-    const endpoint = `/api/v1/order/complete/${orderId}`;
-    return apiCall(API_METHOD.PATCH, endpoint);
-  },
-  export: (payload) => {
-    const endpoint = `/api/v1/order/export`;
-    return apiCall(API_METHOD.POST, endpoint, payload, null, null, { responseType: "blob" });
-  },
-  searchAuditLog: (payload) => {
-    const endpoint = `/api/v1/order/audit-log/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  searchAuditLogWithPagination: (payload, signal) => {
-    const endpoint = `/api/v1/order/audit-log/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload, null, null, { signal }).then((res) => {
-      return preProcessData(res, payload?.pageSize);
-    });
-  },
-};
-
 // Đơn hàng (REST số nhiều: /api/v1/orders) — API MỚI theo backend thật.
 // KHÁC OrderApi cũ (RPC /api/v1/order/*, scaffold) — cùng tiền lệ CustomersApi vs CustomerApi.
 // getAll nhận query: page, limit, status, tableId, customerId, startDate, endDate.
@@ -325,51 +156,6 @@ export const OrdersApi = {
   refund: (id, payload) => {
     const endpoint = `/api/v1/orders/${id}/refund`;
     return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-};
-
-export const TableApi = {
-  getAll: () => {
-    const endpoint = `/api/v1/table/all`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  search: (payload) => {
-    const endpoint = `/api/v1/table/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  searchWithPagination: (payload, signal) => {
-    const endpoint = `/api/v1/table/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload, null, null, { signal }).then((res) => {
-      return preProcessData(res, payload?.pageSize);
-    });
-  },
-  create: (payload) => {
-    const endpoint = `/api/v1/table/create`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  update: (payload) => {
-    const endpoint = `/api/v1/table/update`;
-    return apiCall(API_METHOD.PUT, endpoint, payload);
-  },
-  delete: (tableId) => {
-    const endpoint = `/api/v1/table/delete/${tableId}`;
-    return apiCall(API_METHOD.DELETE, endpoint);
-  },
-  getDetailById: (tableId) => {
-    const endpoint = `/api/v1/table/details/${tableId}`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  generateQR: (tableId) => {
-    const endpoint = `/api/v1/table/qr-code/${tableId}`;
-    return apiCall(API_METHOD.POST, endpoint);
-  },
-  exportQR: (tableId) => {
-    const endpoint = `/api/v1/table/export/qr-code/${tableId}`;
-    return apiCall(API_METHOD.GET, endpoint, null, null, null, { responseType: "blob" });
-  },
-  updateStatus: (payload) => {
-    const endpoint = `/api/v1/table/update-status`;
-    return apiCall(API_METHOD.PATCH, endpoint, payload);
   },
 };
 
@@ -423,53 +209,6 @@ export const TablesApi = {
   generateQR: (id) => {
     const endpoint = `/api/v1/tables/${id}/qrcode`;
     return apiCall(API_METHOD.POST, endpoint);
-  },
-};
-
-export const CustomerApi = {
-  search: (payload) => {
-    const endpoint = `/api/v1/customer/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  searchWithPagination: (payload, signal) => {
-    const endpoint = `/api/v1/customer/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload, null, null, { signal }).then((res) => {
-      return preProcessData(res, payload?.pageSize);
-    });
-  },
-  create: (payload) => {
-    const endpoint = `/api/v1/customer/create`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  update: (payload) => {
-    const endpoint = `/api/v1/customer/update`;
-    return apiCall(API_METHOD.PUT, endpoint, payload);
-  },
-  delete: (customerId) => {
-    const endpoint = `/api/v1/customer/delete/${customerId}`;
-    return apiCall(API_METHOD.DELETE, endpoint);
-  },
-  getDetailById: (customerId) => {
-    const endpoint = `/api/v1/customer/details/${customerId}`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  updateActive: (payload) => {
-    const endpoint = `/api/v1/customer/update-active`;
-    return apiCall(API_METHOD.PATCH, endpoint, payload);
-  },
-  importFile: (payload) => {
-    const endpoint = `/api/v1/customer/import`;
-    return apiCall(API_METHOD.POST, endpoint, payload, {
-      "Content-Type": "multipart/form-data",
-    });
-  },
-  getTemplateImport: () => {
-    const endpoint = `/api/v1/customer/template/import`;
-    return apiCall(API_METHOD.GET, endpoint, null, null, null, { responseType: "blob" });
-  },
-  export: (payload) => {
-    const endpoint = `/api/v1/customer/export`;
-    return apiCall(API_METHOD.POST, endpoint, payload, null, null, { responseType: "blob" });
   },
 };
 
@@ -560,47 +299,6 @@ export const MembershipProgramApi = {
   approve: (payload) => {
     const endpoint = `/api/v1/membership-program/approve`;
     return apiCall(API_METHOD.PATCH, endpoint, payload);
-  },
-};
-
-export const StaffApi = {
-  all: () => {
-    const endpoint = `/api/v1/staff/all`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  search: (payload) => {
-    const endpoint = `/api/v1/staff/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  searchWithPagination: (payload, signal) => {
-    const endpoint = `/api/v1/staff/search`;
-    return apiCall(API_METHOD.POST, endpoint, payload, null, null, { signal }).then((res) => {
-      return preProcessData(res, payload?.pageSize);
-    });
-  },
-  create: (payload) => {
-    const endpoint = `/api/v1/staff/create`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  update: (payload) => {
-    const endpoint = `/api/v1/staff/update`;
-    return apiCall(API_METHOD.PUT, endpoint, payload);
-  },
-  delete: (id) => {
-    const endpoint = `/api/v1/staff/delete/${id}`;
-    return apiCall(API_METHOD.DELETE, endpoint);
-  },
-  getDetailById: (id) => {
-    const endpoint = `/api/v1/staff/details/${id}`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  updateActive: (payload) => {
-    const endpoint = `/api/v1/staff/update-active`;
-    return apiCall(API_METHOD.PATCH, endpoint, payload);
-  },
-  getByRole: (payload, signal) => {
-    const endpoint = `/api/v1/staff/get-by-role`;
-    return apiCall(API_METHOD.POST, endpoint, payload, null, null, { signal });
   },
 };
 
