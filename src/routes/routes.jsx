@@ -13,6 +13,7 @@ import OrderEditor from "@/pages/orders/OrderEditor";
 import Menu from "@/pages/menu/Menu";
 import MenuDetail from "@/pages/menu/MenuDetail";
 import Categories from "@/pages/categories/Categories";
+import Toppings from "@/pages/toppings/Toppings";
 import Zones from "@/pages/zones/Zones";
 import Inventory from "@/pages/inventory/Inventory";
 import InventoryDetail from "@/pages/inventory/InventoryDetail";
@@ -66,6 +67,8 @@ export const router = createBrowserRouter([
       { path: ROUTE_PATH.MENU_DETAIL, element: <MenuDetail /> },
 
       { path: ROUTE_PATH.CATEGORIES, element: <Categories /> },
+
+      { path: ROUTE_PATH.TOPPINGS, element: <Toppings /> },
 
       { path: ROUTE_PATH.ZONES, element: <Zones /> },
 

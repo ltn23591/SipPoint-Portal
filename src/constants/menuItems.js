@@ -30,6 +30,7 @@ export const MENU_ITEMS = [
   { key: "orders", label: "Đơn hàng", icon: ShoppingBag, path: ROUTE_PATH.ORDERS },
   { key: "menu", label: "Menu", icon: UtensilsCrossed, path: ROUTE_PATH.MENU },
   { key: "categories", label: "Danh mục", icon: Tags, path: ROUTE_PATH.CATEGORIES },
+  { key: "toppings", label: "Topping", icon: Tags, path: ROUTE_PATH.TOPPINGS },
   { key: "zones", label: "Khu vực", icon: Map, path: ROUTE_PATH.ZONES },
   { key: "tables", label: "Bàn & QR", icon: QrCode, path: ROUTE_PATH.TABLES },
   { key: "shifts", label: "Ca làm việc", icon: ClipboardList, path: ROUTE_PATH.SHIFTS },

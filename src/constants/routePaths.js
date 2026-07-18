@@ -15,6 +15,8 @@ export const ROUTE_PATH = {
 
   CATEGORIES: "/categories",
 
+  TOPPINGS: "/toppings",
+
   ZONES: "/zones",
 
   TABLES: "/tables",
