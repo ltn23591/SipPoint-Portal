@@ -55,28 +55,6 @@ export const CategoryApi = {
   },
 };
 
-export const ToppingApi = {
-  getAll: () => {
-    const endpoint = `/api/v1/toppings`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  getById: (id) => {
-    const endpoint = `/api/v1/toppings/${id}`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  create: (payload) => {
-    const endpoint = `/api/v1/toppings`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  update: (id, payload) => {
-    const endpoint = `/api/v1/toppings/${id}`;
-    return apiCall(API_METHOD.PUT, endpoint, payload);
-  },
-  delete: (id) => {
-    const endpoint = `/api/v1/toppings/${id}`;
-    return apiCall(API_METHOD.DELETE, endpoint);
-  },
-};
 
 // Sản phẩm / Thực đơn (REST số nhiều: /api/v1/products) — API MỚI theo backend thật.
 // KHÁC ProductApi cũ (RPC scaffold /api/v1/product/*). Cùng tiền lệ CustomersApi vs CustomerApi.
