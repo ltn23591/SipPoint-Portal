@@ -654,3 +654,14 @@ export const ReportApi = {
     });
   },
 };
+
+export const LuckyWheelApi = {
+  getConfigs: () => {
+    const endpoint = `/api/v1/lucky-wheel/config`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  updateConfigs: (payload) => {
+    const endpoint = `/api/v1/lucky-wheel/config`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+};
