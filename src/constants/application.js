@@ -219,3 +219,94 @@ export const SHIFT_STATUS_LABEL = {
   [SHIFT_STATUS.OPEN]: "Đang mở",
   [SHIFT_STATUS.CLOSED]: "Đã đóng",
 };
+
+// ─── Vòng quay may mắn (Module 5) ───────────────────────────────────────────
+export const LUCKY_WHEEL_STATUS = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  FINISHED: "FINISHED",
+};
+
+export const LUCKY_WHEEL_STATUS_LABEL = {
+  [LUCKY_WHEEL_STATUS.DRAFT]: "Nháp",
+  [LUCKY_WHEEL_STATUS.ACTIVE]: "Đang chạy",
+  [LUCKY_WHEEL_STATUS.FINISHED]: "Đã kết thúc",
+};
+
+export const WHEEL_TARGET_TYPE = {
+  ALL: "ALL",
+  SEGMENT: "SEGMENT",
+  TIER: "TIER",
+};
+
+export const WHEEL_TARGET_TYPE_LABEL = {
+  [WHEEL_TARGET_TYPE.ALL]: "Tất cả khách hàng",
+  [WHEEL_TARGET_TYPE.SEGMENT]: "Theo nhóm khách hàng",
+  [WHEEL_TARGET_TYPE.TIER]: "Theo bậc hạng",
+};
+
+export const PRIZE_TYPE = {
+  VOUCHER: "VOUCHER",
+  POINTS: "POINTS",
+  PHYSICAL: "PHYSICAL",
+  NONE: "NONE",
+};
+
+export const PRIZE_TYPE_LABEL = {
+  [PRIZE_TYPE.VOUCHER]: "Voucher",
+  [PRIZE_TYPE.POINTS]: "Điểm thưởng",
+  [PRIZE_TYPE.PHYSICAL]: "Quà hiện vật",
+  [PRIZE_TYPE.NONE]: "Chúc may mắn",
+};
+
+// ─── Nhóm khách hàng (Module 3) ─────────────────────────────────────────────
+export const GENDER = {
+  MALE: "male",
+  FEMALE: "female",
+  OTHER: "other",
+};
+
+export const GENDER_LABEL = {
+  [GENDER.MALE]: "Nam",
+  [GENDER.FEMALE]: "Nữ",
+  [GENDER.OTHER]: "Khác",
+};
+
+export const GENDER_OPTIONS = Object.entries(GENDER_LABEL).map(([value, label]) => ({
+  value,
+  label,
+}));
+
+export const SEGMENT_MODE = {
+  AUTO: "AUTO",
+  MANUAL: "MANUAL",
+};
+
+export const SEGMENT_OPERATOR_LABEL = {
+  eq: "bằng",
+  ne: "khác",
+  gt: "lớn hơn",
+  lt: "nhỏ hơn",
+  between: "trong khoảng",
+  in: "thuộc",
+  notIn: "không thuộc",
+};
+
+// Danh mục điều kiện lọc (contract với backend customerSegment.service).
+// valueType: enum | number | months | boolean | tier
+export const SEGMENT_FIELDS = {
+  gender: { label: "Giới tính", valueType: "enum", operators: ["eq", "ne"], options: GENDER_OPTIONS },
+  age: { label: "Tuổi", valueType: "number", operators: ["eq", "gt", "lt", "between"] },
+  birthdayMonth: { label: "Tháng sinh nhật", valueType: "months", operators: ["in", "notIn"] },
+  points: { label: "Tổng điểm", valueType: "number", operators: ["eq", "gt", "lt", "between"] },
+  hasEmail: { label: "Có email", valueType: "boolean", operators: ["eq"] },
+  hasPhone: { label: "Có số điện thoại", valueType: "boolean", operators: ["eq"] },
+  redeemCount: { label: "Số lần đổi quà", valueType: "number", operators: ["eq", "gt", "lt", "between"] },
+  orderCount: { label: "Số lần order", valueType: "number", operators: ["eq", "gt", "lt", "between"] },
+  tier: { label: "Hạng thành viên", valueType: "tier", operators: ["in", "notIn"] },
+};
+
+export const SEGMENT_FIELD_OPTIONS = Object.entries(SEGMENT_FIELDS).map(([value, cfg]) => ({
+  value,
+  label: cfg.label,
+}));
