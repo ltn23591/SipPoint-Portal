@@ -137,6 +137,41 @@ export const OrdersApi = {
   },
 };
 
+// Vòng quay may mắn (REST số nhiều: /api/v1/lucky-wheels) — Module 5.
+// Admin: CRUD + status + log người trúng. Khách: active/spin/me/spins.
+export const LuckyWheelApi = {
+  getAll: (params, signal) => {
+    const endpoint = `/api/v1/lucky-wheels`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+  getById: (id) => {
+    const endpoint = `/api/v1/lucky-wheels/${id}`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  create: (payload) => {
+    const endpoint = `/api/v1/lucky-wheels`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  update: (id, payload) => {
+    const endpoint = `/api/v1/lucky-wheels/${id}`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+  delete: (id) => {
+    const endpoint = `/api/v1/lucky-wheels/${id}`;
+    return apiCall(API_METHOD.DELETE, endpoint);
+  },
+  // payload = { status: "ACTIVE" | "FINISHED" }
+  updateStatus: (id, payload) => {
+    const endpoint = `/api/v1/lucky-wheels/${id}/status`;
+    return apiCall(API_METHOD.PATCH, endpoint, payload);
+  },
+  // Log người trúng của 1 vòng quay (admin)
+  getSpins: (id, params, signal) => {
+    const endpoint = `/api/v1/lucky-wheels/${id}/spins`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+};
+
 // Khu vực (REST số nhiều: /api/v1/zones) — 1 khu vực chứa nhiều bàn.
 export const ZoneApi = {
   getAll: (params, signal) => {
@@ -214,29 +249,6 @@ export const CustomersApi = {
   },
 };
 
-export const CustomersApi = {
-  getAll: (params, signal) => {
-    const endpoint = `/api/v1/customers`;
-    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
-  },
-  getById: (id) => {
-    const endpoint = `/api/v1/customers/${id}`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  create: (payload) => {
-    const endpoint = `/api/v1/customers`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  update: (id, payload) => {
-    const endpoint = `/api/v1/customers/${id}`;
-    return apiCall(API_METHOD.PUT, endpoint, payload);
-  },
-  // Cộng / trừ điểm: pointsChange âm = trừ, dương = cộng.
-  adjustPoints: (id, payload) => {
-    const endpoint = `/api/v1/customers/${id}/points`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-};
 
 export const MembershipTierApi = {
   getAllByProgramId: (programId) => {
@@ -301,51 +313,6 @@ export const MembershipProgramApi = {
   approve: (payload) => {
     const endpoint = `/api/v1/membership-program/approve`;
     return apiCall(API_METHOD.PATCH, endpoint, payload);
-  },
-};
-
-// Nhân viên (REST số nhiều: /api/v1/employees) — KHÁC StaffApi cũ (RPC /api/v1/staff/*).
-// `role` là code vai trò (chuỗi thường: admin/cashier/barista); `roleId` được populate khi GET.
-export const EmployeeApi = {
-  getAll: (params, signal) => {
-    const endpoint = `/api/v1/employees`;
-    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
-  },
-  getById: (id) => {
-    const endpoint = `/api/v1/employees/${id}`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  create: (payload) => {
-    const endpoint = `/api/v1/employees`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  update: (id, payload) => {
-    const endpoint = `/api/v1/employees/${id}`;
-    return apiCall(API_METHOD.PUT, endpoint, payload);
-  },
-  delete: (id) => {
-    const endpoint = `/api/v1/employees/${id}`;
-    return apiCall(API_METHOD.DELETE, endpoint);
-  },
-};
-
-// Ca làm việc (/api/v1/shifts) — mở/đóng ca, tiền quỹ.
-export const ShiftApi = {
-  search: (params, signal) => {
-    const endpoint = `/api/v1/shifts/search`;
-    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
-  },
-  open: (payload) => {
-    const endpoint = `/api/v1/shifts/open`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  detail: (id) => {
-    const endpoint = `/api/v1/shifts/${id}/detail`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  close: (id, payload) => {
-    const endpoint = `/api/v1/shifts/${id}/close`;
-    return apiCall(API_METHOD.PUT, endpoint, payload);
   },
 };
 
@@ -501,6 +468,11 @@ export const CustomerSegmentApi = {
   sync: (id) => {
     const endpoint = `/api/v1/customer-segments/${id}/sync`;
     return apiCall(API_METHOD.POST, endpoint);
+  },
+  // Bật/tắt trạng thái hoạt động của nhóm
+  toggleActive: (id) => {
+    const endpoint = `/api/v1/customer-segments/${id}/toggle-active`;
+    return apiCall(API_METHOD.PATCH, endpoint);
   },
   getMembers: (id, params, signal) => {
     const endpoint = `/api/v1/customer-segments/${id}/members`;
