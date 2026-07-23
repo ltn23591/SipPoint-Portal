@@ -27,6 +27,7 @@ import LuckyWheel from "@/pages/luckyWheel/LuckyWheel";
 import Tables from "@/pages/tables/Tables";
 import Customers from "@/pages/customers/Customers";
 import Segments from "@/pages/segments/Segments";
+import SegmentEditor from "@/pages/segments/SegmentEditor";
 import Campaigns from "@/pages/campaigns/Campaigns";
 import Loyalty from "@/pages/loyalty/Loyalty";
 import Staff from "@/pages/staff/Staff";
@@ -74,6 +75,7 @@ export const router = createBrowserRouter([
       { path: ROUTE_PATH.CUSTOMERS, element: <Customers /> },
 
       { path: ROUTE_PATH.SEGMENTS, element: <Segments /> },
+      { path: ROUTE_PATH.SEGMENT_DETAIL, element: <SegmentEditor /> },
       { path: ROUTE_PATH.CAMPAIGNS, element: <Campaigns /> },
 
       { path: ROUTE_PATH.LOYALTY, element: <Loyalty /> },

@@ -12,9 +12,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { isEmail } from "@/helpers/validators";
+import { GENDER_OPTIONS } from "@/constants/application";
 
-const EMPTY = { fullName: "", email: "", phone: "", dateOfBirth: "" };
+const NO_GENDER = "__none__";
+
+const EMPTY = { fullName: "", email: "", phone: "", dateOfBirth: "", gender: NO_GENDER };
 
 const toDateInput = (value) => (value ? String(value).slice(0, 10) : "");
 
@@ -30,6 +40,7 @@ export function CustomerFormDialog({ open, onOpenChange, customer, onSubmit, loa
         email: customer?.email ?? "",
         phone: customer?.phone ?? "",
         dateOfBirth: toDateInput(customer?.dateOfBirth),
+        gender: customer?.gender ?? NO_GENDER,
       });
       setErrors({});
     }
@@ -56,6 +67,7 @@ export function CustomerFormDialog({ open, onOpenChange, customer, onSubmit, loa
       email: form.email.trim(),
       phone: form.phone.trim(),
       dateOfBirth: form.dateOfBirth || null,
+      gender: form.gender === NO_GENDER ? null : form.gender,
     });
   };
 
@@ -117,14 +129,32 @@ export function CustomerFormDialog({ open, onOpenChange, customer, onSubmit, loa
             ) : null}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="cus-dob">Ngày sinh</Label>
-            <Input
-              id="cus-dob"
-              type="date"
-              value={form.dateOfBirth}
-              onChange={(e) => setField("dateOfBirth", e.target.value)}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="cus-dob">Ngày sinh</Label>
+              <Input
+                id="cus-dob"
+                type="date"
+                value={form.dateOfBirth}
+                onChange={(e) => setField("dateOfBirth", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Giới tính</Label>
+              <Select value={form.gender} onValueChange={(v) => setField("gender", v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Chưa xác định" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_GENDER}>Chưa xác định</SelectItem>
+                  {GENDER_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <DialogFooter>

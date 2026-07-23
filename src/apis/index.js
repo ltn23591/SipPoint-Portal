@@ -137,6 +137,41 @@ export const OrdersApi = {
   },
 };
 
+// Vòng quay may mắn (REST số nhiều: /api/v1/lucky-wheels) — Module 5.
+// Admin: CRUD + status + log người trúng. Khách: active/spin/me/spins.
+export const LuckyWheelApi = {
+  getAll: (params, signal) => {
+    const endpoint = `/api/v1/lucky-wheels`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+  getById: (id) => {
+    const endpoint = `/api/v1/lucky-wheels/${id}`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  create: (payload) => {
+    const endpoint = `/api/v1/lucky-wheels`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  update: (id, payload) => {
+    const endpoint = `/api/v1/lucky-wheels/${id}`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+  delete: (id) => {
+    const endpoint = `/api/v1/lucky-wheels/${id}`;
+    return apiCall(API_METHOD.DELETE, endpoint);
+  },
+  // payload = { status: "ACTIVE" | "FINISHED" }
+  updateStatus: (id, payload) => {
+    const endpoint = `/api/v1/lucky-wheels/${id}/status`;
+    return apiCall(API_METHOD.PATCH, endpoint, payload);
+  },
+  // Log người trúng của 1 vòng quay (admin)
+  getSpins: (id, params, signal) => {
+    const endpoint = `/api/v1/lucky-wheels/${id}/spins`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+};
+
 // Khu vực (REST số nhiều: /api/v1/zones) — 1 khu vực chứa nhiều bàn.
 export const ZoneApi = {
   getAll: (params, signal) => {
@@ -187,30 +222,6 @@ export const TablesApi = {
   generateQR: (id) => {
     const endpoint = `/api/v1/tables/${id}/qrcode`;
     return apiCall(API_METHOD.POST, endpoint);
-  },
-};
-
-export const CustomersApi = {
-  getAll: (params, signal) => {
-    const endpoint = `/api/v1/customers`;
-    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
-  },
-  getById: (id) => {
-    const endpoint = `/api/v1/customers/${id}`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  create: (payload) => {
-    const endpoint = `/api/v1/customers`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  update: (id, payload) => {
-    const endpoint = `/api/v1/customers/${id}`;
-    return apiCall(API_METHOD.PUT, endpoint, payload);
-  },
-  // Cộng / trừ điểm: pointsChange âm = trừ, dương = cộng.
-  adjustPoints: (id, payload) => {
-    const endpoint = `/api/v1/customers/${id}/points`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
   },
 };
 
@@ -501,6 +512,11 @@ export const CustomerSegmentApi = {
   sync: (id) => {
     const endpoint = `/api/v1/customer-segments/${id}/sync`;
     return apiCall(API_METHOD.POST, endpoint);
+  },
+  // Bật/tắt trạng thái hoạt động của nhóm
+  toggleActive: (id) => {
+    const endpoint = `/api/v1/customer-segments/${id}/toggle-active`;
+    return apiCall(API_METHOD.PATCH, endpoint);
   },
   getMembers: (id, params, signal) => {
     const endpoint = `/api/v1/customer-segments/${id}/members`;
