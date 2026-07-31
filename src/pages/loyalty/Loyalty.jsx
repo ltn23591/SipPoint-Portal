@@ -1,13 +1,21 @@
-import { Gift, Coins, Crown } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { Gift, Coins, Crown, Plus, Pencil } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatNumber } from "@/helpers/format";
 import { MembershipTierApi, CampaignApi } from "@/apis";
+import { TierFormDialog } from "./TierFormDialog";
 
 export default function Loyalty() {
+  const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedTier, setSelectedTier] = useState(null);
+
   const { data: tiers = [], isLoading: isTiersLoading } = useQuery({
     queryKey: ["membership-tiers-current"],
     queryFn: async () => {
@@ -24,11 +32,39 @@ export default function Loyalty() {
     },
   });
 
+  const saveMutation = useMutation({
+    mutationFn: async (payload) => {
+      if (selectedTier?._id) {
+        return await MembershipTierApi.update({ ...payload, id: selectedTier._id });
+      }
+      return await MembershipTierApi.create(payload);
+    },
+    onSuccess: () => {
+      toast.success(selectedTier?._id ? "Cập nhật hạng thành công!" : "Tạo hạng thành viên mới thành công!");
+      queryClient.invalidateQueries(["membership-tiers-current"]);
+      setDialogOpen(false);
+      setSelectedTier(null);
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || err?.message || "Thao tác thất bại.");
+    },
+  });
+
+  const handleOpenAdd = () => {
+    setSelectedTier(null);
+    setDialogOpen(true);
+  };
+
+  const handleOpenEdit = (tier) => {
+    setSelectedTier(tier);
+    setDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Loyalty & Events"
-        description="Chương trình tích điểm và các hạng thành viên hệ thống."
+        description="Chương trình tích điểm và quản lý các hạng thành viên hệ thống."
       />
 
       {/* Quy tắc tích điểm */}
@@ -50,10 +86,17 @@ export default function Loyalty() {
 
       {/* Hạng thành viên */}
       <div>
-        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Crown className="size-4 text-primary" />
-          Hạng thành viên
-        </h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Crown className="size-4 text-primary" />
+            Hạng thành viên ({tiers.length})
+          </h2>
+          <Button size="sm" onClick={handleOpenAdd} className="h-8 gap-1 text-xs">
+            <Plus className="size-3.5" />
+            Thêm hạng thành viên
+          </Button>
+        </div>
+
         {isTiersLoading ? (
           <p className="text-sm text-muted-foreground">Đang tải danh sách hạng...</p>
         ) : tiers.length === 0 ? (
@@ -61,19 +104,30 @@ export default function Loyalty() {
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {tiers.map((t) => (
-              <Card key={t._id || t.name} className="py-5">
+              <Card key={t._id || t.name} className="relative py-5">
                 <CardContent className="px-5">
                   <div className="flex items-center justify-between">
                     <p className="text-lg font-bold text-primary">{t.name}</p>
-                    <Badge variant={t.status === "active" ? "success" : "secondary"}>
-                      {t.status === "active" ? "Đang áp dụng" : "Khóa"}
-                    </Badge>
+                    <div className="flex items-center gap-1.5">
+                      <Badge variant={t.status === "active" ? "success" : "secondary"}>
+                        {t.status === "active" ? "Áp dụng" : "Tạm ngưng"}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 rounded-full"
+                        onClick={() => handleOpenEdit(t)}
+                        title="Sửa hạng thành viên"
+                      >
+                        <Pencil className="size-3.5 text-muted-foreground hover:text-foreground" />
+                      </Button>
+                    </div>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">
                     Điều kiện: Từ <strong className="text-foreground">{formatNumber(t.minPoints)}</strong> điểm
                   </p>
                   {t.discountPercentage > 0 && (
-                    <p className="mt-1 text-xs text-emerald-600 font-semibold">
+                    <p className="mt-1 text-xs font-semibold text-emerald-600">
                       Ưu đãi: Giảm {t.discountPercentage}% hóa đơn
                     </p>
                   )}
@@ -117,6 +171,14 @@ export default function Loyalty() {
           </div>
         )}
       </div>
+
+      <TierFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        tier={selectedTier}
+        onSubmit={(payload) => saveMutation.mutate(payload)}
+        loading={saveMutation.isPending}
+      />
     </div>
   );
 }
