@@ -18,8 +18,6 @@ import Inventory from "@/pages/inventory/Inventory";
 import InventoryDetail from "@/pages/inventory/InventoryDetail";
 import Promotions from "@/pages/promotions/Promotions";
 import PromotionDetail from "@/pages/promotions/PromotionDetail";
-import Reviews from "@/pages/reviews/Reviews";
-import ReviewDetail from "@/pages/reviews/ReviewDetail";
 import Notifications from "@/pages/notifications/Notifications";
 import NotificationDetail from "@/pages/notifications/NotificationDetail";
 import Payments from "@/pages/payments/Payments";
@@ -88,9 +86,6 @@ export const router = createBrowserRouter([
 
       { path: ROUTE_PATH.PROMOTIONS, element: <Promotions /> },
       { path: ROUTE_PATH.PROMOTIONS_DETAIL, element: <PromotionDetail /> },
-
-      { path: ROUTE_PATH.REVIEWS, element: <Reviews /> },
-      { path: ROUTE_PATH.REVIEWS_DETAIL, element: <ReviewDetail /> },
 
       { path: ROUTE_PATH.NOTIFICATIONS, element: <Notifications /> },
       { path: ROUTE_PATH.NOTIFICATIONS_DETAIL, element: <NotificationDetail /> },

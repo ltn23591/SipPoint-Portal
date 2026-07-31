@@ -43,9 +43,6 @@ export const ROUTE_PATH = {
   PROMOTIONS: "/promotions",
   PROMOTIONS_DETAIL: "/promotions/:id",
 
-  REVIEWS: "/reviews",
-  REVIEWS_DETAIL: "/reviews/:id",
-
   NOTIFICATIONS: "/notifications",
   NOTIFICATIONS_DETAIL: "/notifications/:id",
 
