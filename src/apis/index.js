@@ -80,6 +80,10 @@ export const ProductsApi = {
     const endpoint = `/api/v1/products/${id}`;
     return apiCall(API_METHOD.DELETE, endpoint);
   },
+  restore: (id) => {
+    const endpoint = `/api/v1/products/${id}/restore`;
+    return apiCall(API_METHOD.PATCH, endpoint);
+  },
   importFile: (payload) => {
     const endpoint = `/api/v1/products/import`;
     return apiCall(API_METHOD.POST, endpoint, payload, {
