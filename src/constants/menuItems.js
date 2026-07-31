@@ -32,7 +32,6 @@ export const MENU_ITEMS = [
   { key: "categories", label: "Danh mục", icon: Tags, path: ROUTE_PATH.CATEGORIES },
   { key: "zones", label: "Khu vực", icon: Map, path: ROUTE_PATH.ZONES },
   { key: "tables", label: "Bàn & QR", icon: QrCode, path: ROUTE_PATH.TABLES },
-  { key: "shifts", label: "Ca làm việc", icon: ClipboardList, path: ROUTE_PATH.SHIFTS },
   { key: "payments", label: "Thanh toán", icon: CreditCard, path: ROUTE_PATH.PAYMENTS },
 
   { type: "header", key: "grp-inventory", label: "Kho vận" },

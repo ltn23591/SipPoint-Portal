@@ -32,7 +32,6 @@ import Campaigns from "@/pages/campaigns/Campaigns";
 import Loyalty from "@/pages/loyalty/Loyalty";
 import Staff from "@/pages/staff/Staff";
 import Roles from "@/pages/roles/Roles";
-import Shifts from "@/pages/shifts/Shifts";
 import Reports from "@/pages/reports/Reports";
 import Settings from "@/pages/settings/Settings";
 import Profile from "@/pages/profile/Profile";
@@ -99,8 +98,6 @@ export const router = createBrowserRouter([
       { path: ROUTE_PATH.STAFF, element: <Staff /> },
 
       { path: ROUTE_PATH.ROLES, element: <Roles /> },
-
-      { path: ROUTE_PATH.SHIFTS, element: <Shifts /> },
 
       { path: ROUTE_PATH.REPORTS, element: <Reports /> },
 
