@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Clock, MapPin, MoreHorizontal, UtensilsCrossed } from "lucide-react";
+import { printReceipt } from "@/helpers/printReceipt";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -74,10 +75,7 @@ export function OrderCard({ order, onStatusChange, onView, onEdit }) {
                 <DropdownMenuItem onClick={() => onEdit?.(order)}>
                   {TEXT.edit}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {
-                  const { printReceipt } = require("@/helpers/printReceipt");
-                  printReceipt(order);
-                }}>
+                <DropdownMenuItem onClick={() => printReceipt(order)}>
                   In hóa đơn
                 </DropdownMenuItem>
                 {!isCancelled && (

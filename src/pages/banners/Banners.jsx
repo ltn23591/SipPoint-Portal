@@ -102,14 +102,17 @@ export default function Banners() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await UploadApi.single(formData);
-      const url = res?.data?.data?.url || res?.data?.url || res?.data?.data?.secure_url;
+      formData.append("folder", "banners");
+      const res = await UploadApi.cloudinaryFile(formData);
+      const url = res?.data?.data?.secure_url || res?.data?.data?.url || res?.data?.url;
       if (url) {
         setImage(url);
         toast.success("Tải ảnh lên thành công!");
+      } else {
+        toast.error("Không nhận được URL ảnh từ server.");
       }
     } catch (err) {
-      toast.error("Tải ảnh lên thất bại.");
+      toast.error("Tải ảnh lên thất bại: " + (err?.response?.data?.message || err?.message || ""));
     } finally {
       setIsUploading(false);
     }
