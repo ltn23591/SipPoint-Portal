@@ -102,6 +102,29 @@ export function OrderCard({ order, onStatusChange, onView, onEdit }) {
           </span>
         </div>
 
+        {/* Items summary list */}
+        {order.items && order.items.length > 0 && (
+          <div className="mb-2 space-y-0.5 text-xs text-muted-foreground border-t border-b py-1.5 my-1.5">
+            {order.items.slice(0, 3).map((it, idx) => (
+              <div key={idx} className="flex items-center justify-between gap-1">
+                <span className="truncate max-w-[150px] font-medium text-foreground">
+                  {it.qty}x {it.name}
+                </span>
+                {it.note ? (
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400 italic truncate max-w-[100px]">
+                    ✍️ {it.note}
+                  </span>
+                ) : null}
+              </div>
+            ))}
+            {order.items.length > 3 && (
+              <p className="text-[10px] text-muted-foreground font-medium">
+                + {order.items.length - 3} món khác...
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Amount & time */}
         <div className="mb-3 flex items-center justify-between text-xs">
           <span className="font-semibold text-foreground">{formatAmount(order.totalAmount)}</span>
