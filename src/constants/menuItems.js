@@ -20,6 +20,7 @@ import {
   Dices,
   UsersRound,
   Megaphone,
+  History,
 } from "lucide-react";
 import { ROUTE_PATH } from "./routePaths";
 
@@ -49,6 +50,7 @@ export const MENU_ITEMS = [
   { type: "header", key: "grp-admin", label: "Quản trị" },
   { key: "staff", label: "Nhân viên", icon: UserCog, path: ROUTE_PATH.STAFF, permission: "manage_staff" },
   { key: "roles", label: "Vai trò & Quyền", icon: ShieldCheck, path: ROUTE_PATH.ROLES, permission: "manage_staff" },
+  { key: "activity-logs", label: "Nhật ký hoạt động", icon: History, path: ROUTE_PATH.ACTIVITY_LOGS, permission: "manage_staff" },
   { key: "reports", label: "Báo cáo", icon: BarChart3, path: ROUTE_PATH.REPORTS, permission: "view_reports" },
   { key: "settings", label: "Cài đặt", icon: Settings, path: ROUTE_PATH.SETTINGS, permission: "manage_store" },
 ];

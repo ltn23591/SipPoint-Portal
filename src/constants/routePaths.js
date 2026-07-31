@@ -50,5 +50,7 @@ export const ROUTE_PATH = {
 
   LUCKY_WHEEL: "/lucky-wheel",
 
+  ACTIVITY_LOGS: "/activity-logs",
+
   NOT_FOUND: "*",
 };
