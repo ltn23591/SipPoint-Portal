@@ -74,6 +74,12 @@ export function OrderCard({ order, onStatusChange, onView, onEdit }) {
                 <DropdownMenuItem onClick={() => onEdit?.(order)}>
                   {TEXT.edit}
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  const { printReceipt } = require("@/helpers/printReceipt");
+                  printReceipt(order);
+                }}>
+                  In hóa đơn
+                </DropdownMenuItem>
                 {!isCancelled && (
                   <>
                     <DropdownMenuSeparator />

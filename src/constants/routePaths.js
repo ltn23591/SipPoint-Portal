@@ -52,5 +52,7 @@ export const ROUTE_PATH = {
 
   ACTIVITY_LOGS: "/activity-logs",
 
+  BANNERS: "/banners",
+
   NOT_FOUND: "*",
 };

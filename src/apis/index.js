@@ -707,3 +707,22 @@ export const ReportApi = {
     });
   },
 };
+
+export const BannerApi = {
+  getAll: () => {
+    const endpoint = `/api/v1/banners`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  create: (payload) => {
+    const endpoint = `/api/v1/banners`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  update: (id, payload) => {
+    const endpoint = `/api/v1/banners/${id}`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+  delete: (id) => {
+    const endpoint = `/api/v1/banners/${id}`;
+    return apiCall(API_METHOD.DELETE, endpoint);
+  },
+};

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Armchair, User, Clock, StickyNote, Tag, Undo2 } from "lucide-react";
+import { Loader2, Armchair, User, Clock, StickyNote, Tag, Undo2, Printer } from "lucide-react";
 import { toast } from "sonner";
+import { printReceipt } from "@/helpers/printReceipt";
 
 import {
   Dialog,
@@ -133,20 +134,34 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {order ? `Đơn ${order.orderNumber}` : "Chi tiết đơn hàng"}
-            {order?.status && (
-              <Badge className={cn(STATUS_BADGE_CLASS[order.status])}>
-                {ORDER_STATUS_LABEL[order.status] || order.status}
-              </Badge>
-            )}
-          </DialogTitle>
-          <DialogDescription>
-            {order?.createdAt
-              ? `Tạo lúc ${formatDate(order.createdAt, DATE_TIME_FORMAT)}`
-              : "Thông tin chi tiết đơn hàng."}
-          </DialogDescription>
+        <DialogHeader className="flex flex-row items-center justify-between">
+          <div>
+            <DialogTitle className="flex items-center gap-2">
+              {order ? `Đơn ${order.orderNumber}` : "Chi tiết đơn hàng"}
+              {order?.status && (
+                <Badge className={cn(STATUS_BADGE_CLASS[order.status])}>
+                  {ORDER_STATUS_LABEL[order.status] || order.status}
+                </Badge>
+              )}
+            </DialogTitle>
+            <DialogDescription className="mt-1">
+              {order?.createdAt
+                ? `Tạo lúc ${formatDate(order.createdAt, DATE_TIME_FORMAT)}`
+                : "Thông tin chi tiết đơn hàng."}
+            </DialogDescription>
+          </div>
+          {order && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => printReceipt(order)}
+              className="gap-1.5 shrink-0"
+            >
+              <Printer className="size-4" />
+              In hóa đơn
+            </Button>
+          )}
         </DialogHeader>
 
         {isLoading ? (

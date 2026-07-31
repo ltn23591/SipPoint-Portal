@@ -21,6 +21,7 @@ import {
   UsersRound,
   Megaphone,
   History,
+  Image,
 } from "lucide-react";
 import { ROUTE_PATH } from "./routePaths";
 
@@ -45,6 +46,7 @@ export const MENU_ITEMS = [
   { key: "loyalty", label: "Loyalty & Events", icon: Gift, path: ROUTE_PATH.LOYALTY, permission: "manage_promotions" },
   { key: "promotions", label: "Khuyến mãi", icon: BadgePercent, path: ROUTE_PATH.PROMOTIONS, permission: "manage_promotions" },
   { key: "notifications", label: "Thông báo", icon: Bell, path: ROUTE_PATH.NOTIFICATIONS, permission: "manage_store" },
+  { key: "banners", label: "Banner Quảng cáo", icon: Image, path: ROUTE_PATH.BANNERS, permission: "manage_promotions" },
   { key: "lucky-wheel", label: "Vòng quay may mắn", icon: Dices, path: ROUTE_PATH.LUCKY_WHEEL, permission: "manage_promotions" },
 
   { type: "header", key: "grp-admin", label: "Quản trị" },

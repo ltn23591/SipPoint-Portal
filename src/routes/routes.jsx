@@ -31,6 +31,7 @@ import Loyalty from "@/pages/loyalty/Loyalty";
 import Staff from "@/pages/staff/Staff";
 import Roles from "@/pages/roles/Roles";
 import ActivityLogs from "@/pages/activityLogs/ActivityLogs";
+import Banners from "@/pages/banners/Banners";
 import Reports from "@/pages/reports/Reports";
 import Settings from "@/pages/settings/Settings";
 import Profile from "@/pages/profile/Profile";
@@ -96,6 +97,8 @@ export const router = createBrowserRouter([
       { path: ROUTE_PATH.ROLES, element: <Roles /> },
 
       { path: ROUTE_PATH.ACTIVITY_LOGS, element: <ActivityLogs /> },
+
+      { path: ROUTE_PATH.BANNERS, element: <Banners /> },
 
       { path: ROUTE_PATH.REPORTS, element: <Reports /> },
 
