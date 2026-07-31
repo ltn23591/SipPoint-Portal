@@ -407,6 +407,14 @@ export const StoreApi = {
     const endpoint = `/api/v1/store/delete/${id}`;
     return apiCall(API_METHOD.DELETE, endpoint);
   },
+  getConfig: () => {
+    const endpoint = `/api/v1/store/config`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  updateConfig: (payload) => {
+    const endpoint = `/api/v1/store/config`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
   detail: (id) => {
     const endpoint = `/api/v1/store/details/${id}`;
     return apiCall(API_METHOD.GET, endpoint);
