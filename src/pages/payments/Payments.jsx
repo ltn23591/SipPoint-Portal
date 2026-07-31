@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Banknote, CreditCard, QrCode, Wallet } from "lucide-react";
+import { Banknote, QrCode } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -7,13 +7,11 @@ import { Switch } from "@/components/ui/switch";
 import { PageHeader } from "@/components/common/PageHeader";
 import { formatPercent } from "@/helpers/format";
 
-const ICONS = { CASH: Banknote, TRANSFER: QrCode, CARD: CreditCard, EWALLET: Wallet };
+const ICONS = { CASH: Banknote, TRANSFER: QrCode };
 
 const INITIAL_METHODS = [
   { _id: "665f25000000000000f10001", type: "CASH", name: "Tiền mặt", fee: 0, enabled: true },
-  { _id: "665f25000000000000f10002", type: "TRANSFER", name: "Chuyển khoản / QR", fee: 0, enabled: true },
-  { _id: "665f25000000000000f10003", type: "CARD", name: "Thẻ ngân hàng", fee: 0.011, enabled: false },
-  { _id: "665f25000000000000f10004", type: "EWALLET", name: "Ví điện tử (Momo/ZaloPay)", fee: 0.02, enabled: true },
+  { _id: "665f25000000000000f10002", type: "TRANSFER", name: "Chuyển khoản / Mã QR Ngân hàng", fee: 0, enabled: true },
 ];
 
 export default function Payments() {
