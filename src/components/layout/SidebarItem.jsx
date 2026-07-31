@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Lock } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -8,6 +8,14 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useAuthStore } from "@/stores/authStore";
+import { hasPermission } from "@/constants/menuItems";
 
 const isChildActive = (item, pathname) => {
   if (item.children?.length) {
@@ -19,6 +27,8 @@ const isChildActive = (item, pathname) => {
 export function SidebarItem({ item, collapsed }) {
   const location = useLocation();
   const Icon = item.icon;
+  const user = useAuthStore((s) => s.user);
+  const allowed = hasPermission(item.permission, user);
   const hasChildren = !!item.children?.length;
   const active = isChildActive(item, location.pathname);
 
@@ -27,6 +37,34 @@ export function SidebarItem({ item, collapsed }) {
   useEffect(() => {
     if (active && !collapsed) setOpen(true);
   }, [active, collapsed]);
+
+  if (!allowed) {
+    return (
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              className={cn(
+                "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors opacity-35 text-sidebar-foreground/40 bg-transparent cursor-not-allowed select-none",
+                collapsed && "justify-center px-2"
+              )}
+            >
+              <Icon className="size-4 shrink-0 text-sidebar-foreground/40" />
+              {!collapsed && (
+                <div className="flex w-full items-center justify-between overflow-hidden">
+                  <span className="truncate">{item.label}</span>
+                  <Lock className="size-3 shrink-0 ml-1 opacity-60 text-sidebar-foreground/40" />
+                </div>
+              )}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side={collapsed ? "right" : "top"}>
+            Bạn không có quyền truy cập chức năng này
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
 
   if (!hasChildren) {
     return (
