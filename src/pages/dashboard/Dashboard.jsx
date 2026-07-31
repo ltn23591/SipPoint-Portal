@@ -1,39 +1,62 @@
-import { Wallet, ShoppingBag, Users, Star, Plus } from "lucide-react";
+import { Wallet, ShoppingBag, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 import { StatCard } from "@/components/common/StatCard";
-import { Button } from "@/components/ui/button";
-import { STATS } from "./mockData";
+import { formatVND, formatNumber } from "@/helpers/format";
+import { ReportApi } from "@/apis";
 import { RevenueChart } from "./RevenueChart";
 import { TopProducts } from "./TopProducts";
 import { RealtimeOrders } from "./RealtimeOrders";
 
-const STAT_ICONS = {
-  wallet: Wallet,
-  bag: ShoppingBag,
-  users: Users,
-  star: Star,
-};
-
-const STAT_ICON_STYLE = {
-  wallet: "bg-primary/10 text-primary",
-  bag: "bg-secondary/10 text-secondary",
-  users: "bg-tertiary/10 text-tertiary",
-  star: "bg-warning/10 text-warning",
-};
-
 export default function Dashboard() {
+  const { data: dashboardData, isLoading } = useQuery({
+    queryKey: ["report-dashboard"],
+    queryFn: async () => {
+      const res = await ReportApi.dashboard();
+      return res?.data?.data || res?.data || {};
+    },
+    refetchInterval: 30000,
+  });
+
+  const totalRevenue = dashboardData?.totalRevenue || 0;
+  const totalOrders = dashboardData?.totalOrders || 0;
+  const totalCustomers = dashboardData?.totalCustomers || 0;
+  const recentOrders = dashboardData?.recentOrders || [];
+
+  const stats = [
+    {
+      key: "revenue",
+      label: "Doanh thu hôm nay",
+      value: formatVND(totalRevenue),
+      icon: Wallet,
+      iconClassName: "bg-primary/10 text-primary",
+    },
+    {
+      key: "orders",
+      label: "Đơn hàng hôm nay",
+      value: `${formatNumber(totalOrders)} đơn`,
+      icon: ShoppingBag,
+      iconClassName: "bg-secondary/10 text-secondary",
+    },
+    {
+      key: "customers",
+      label: "Khách hàng hôm nay",
+      value: `${formatNumber(totalCustomers)} khách`,
+      icon: Users,
+      iconClassName: "bg-tertiary/10 text-tertiary",
+    },
+  ];
+
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {STATS.map((stat) => (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {stats.map((stat) => (
           <StatCard
             key={stat.key}
-            icon={STAT_ICONS[stat.iconKey]}
+            icon={stat.icon}
             label={stat.label}
             value={stat.value}
-            trend={stat.trend}
-            trendDirection={stat.trendDirection}
-            iconClassName={STAT_ICON_STYLE[stat.iconKey]}
+            iconClassName={stat.iconClassName}
           />
         ))}
       </div>
@@ -45,14 +68,7 @@ export default function Dashboard() {
         <TopProducts />
       </div>
 
-      <RealtimeOrders />
-
-      <Button
-        size="icon-lg"
-        className="fixed bottom-6 right-6 size-12 rounded-full shadow-glow"
-      >
-        <Plus className="size-5" />
-      </Button>
+      <RealtimeOrders orders={recentOrders} isLoading={isLoading} />
     </div>
   );
 }
