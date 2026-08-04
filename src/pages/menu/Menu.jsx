@@ -184,16 +184,23 @@ export default function Menu() {
     {
       key: "status",
       title: TEXT.colStatus,
-      width: 150,
+      width: 170,
       render: (row) =>
         row.isDeleted ? (
           <Badge variant="destructive">Đã ẩn / Ngừng bán</Badge>
-        ) : isProductActive(row) ? (
-          <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            Đang bán
-          </Badge>
         ) : (
-          <Badge variant="secondary">Tạm ngưng</Badge>
+          <div className="flex flex-wrap items-center gap-1">
+            {isProductActive(row) ? (
+              <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                Đang bán
+              </Badge>
+            ) : (
+              <Badge variant="secondary">Tạm ngưng</Badge>
+            )}
+            {row.stockStatus === "out_of_stock" && (
+              <Badge className="bg-destructive/10 text-destructive">Hết hàng</Badge>
+            )}
+          </div>
         ),
     },
     {

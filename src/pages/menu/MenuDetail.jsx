@@ -14,7 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ROUTE_PATH } from "@/constants/routePaths";
-import { CategoryApi, ProductsApi, UploadApi } from "@/apis";
+import { CategoryApi, ProductsApi, UploadApi, MaterialApi, RecipeApi } from "@/apis";
+import { RecipeEditor } from "./RecipeEditor";
 import { TEXT } from "./constants";
 
 const UPLOAD_FOLDER = "products";
@@ -86,6 +87,10 @@ export default function MenuDetail() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
+  // Công thức (định mức nguyên liệu) của món
+  const [recipeItems, setRecipeItems] = useState([]);
+  const hadRecipeRef = useRef(false);
+
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
@@ -110,6 +115,43 @@ export default function MenuDetail() {
       return res.data.data;
     },
   });
+
+  // Danh sách nguyên liệu để chọn trong công thức
+  const { data: materials = [] } = useQuery({
+    queryKey: ["materials", "all-for-recipe"],
+    queryFn: async () => {
+      const res = await MaterialApi.getAll({ page: 1, limit: 500 });
+      return res?.data?.success ? res.data.data?.materials || [] : [];
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  // Công thức hiện có của món (khi xem/sửa)
+  const { data: recipe } = useQuery({
+    queryKey: ["recipe", id],
+    enabled: !isCreate,
+    queryFn: async () => {
+      const res = await RecipeApi.getByProduct(id);
+      return res?.data?.success ? res.data.data : null;
+    },
+  });
+
+  useEffect(() => {
+    if (isCreate) {
+      setRecipeItems([]);
+      hadRecipeRef.current = false;
+      return;
+    }
+    if (recipe?.items) {
+      setRecipeItems(
+        recipe.items.map((it) => ({
+          materialId: it.materialId?._id || it.materialId,
+          quantity: it.quantity,
+        }))
+      );
+      hadRecipeRef.current = recipe.items.length > 0;
+    }
+  }, [isCreate, recipe]);
 
   useEffect(() => {
     if (isCreate) {
@@ -171,12 +213,32 @@ export default function MenuDetail() {
       if (!res?.data?.success) {
         throw new Error(res?.data?.message || "Lưu món thất bại.");
       }
+
+      // Đồng bộ công thức nguyên liệu sau khi lưu món
+      const productId = isCreate ? res.data.data?._id : id;
+      const cleanItems = (recipeItems || [])
+        .filter((r) => r.materialId && Number(r.quantity) > 0)
+        .map((r) => ({ materialId: r.materialId, quantity: Number(r.quantity) }));
+
+      if (productId) {
+        if (cleanItems.length > 0) {
+          const rRes = await RecipeApi.upsert(productId, { items: cleanItems });
+          if (!rRes?.data?.success) {
+            throw new Error(rRes?.data?.message || "Lưu công thức thất bại.");
+          }
+        } else if (hadRecipeRef.current) {
+          // Trước có công thức, nay xoá hết -> gỡ công thức
+          await RecipeApi.remove(productId);
+        }
+      }
+
       return res.data;
     },
     onSuccess: (res) => {
       toast.success(res?.message || (isCreate ? "Đã thêm món." : "Đã cập nhật món."));
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["product", id] });
+      qc.invalidateQueries({ queryKey: ["recipe", id] });
       navigate(ROUTE_PATH.MENU);
     },
     onError: (err) => toast.error(err.message),
@@ -450,6 +512,15 @@ export default function MenuDetail() {
               </div>
             ))}
           </div>
+        </Field>
+
+        <Field label="Công thức (định mức nguyên liệu)">
+          <RecipeEditor
+            value={recipeItems}
+            onChange={setRecipeItems}
+            readOnly={readOnly}
+            materials={materials}
+          />
         </Field>
 
         <Field label={TEXT.fieldDescription} required>

@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatVND, formatNumber } from "@/helpers/format";
+import { InventoryReport } from "./InventoryReport";
 import { REPORT_SUMMARY, TOP_PRODUCTS } from "./mockData";
 
 export default function Reports() {
@@ -55,6 +56,8 @@ export default function Reports() {
           </Table>
         </CardContent>
       </Card>
+
+      <InventoryReport />
     </div>
   );
 }
