@@ -35,6 +35,7 @@ export default function Promotions() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState("ALL"); // ALL | VOUCHER | GIFT
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, item: null });
@@ -65,14 +66,21 @@ export default function Promotions() {
   });
 
   const filtered = useMemo(() => {
-    if (!search) return items;
+    let list = items;
+    if (filterType === "VOUCHER") {
+      list = list.filter((p) => !p.pointsCost || p.pointsCost === 0);
+    } else if (filterType === "GIFT") {
+      list = list.filter((p) => p.pointsCost && p.pointsCost > 0);
+    }
+
+    if (!search) return list;
     const q = search.toLowerCase();
-    return items.filter(
+    return list.filter(
       (p) =>
         (p.code || "").toLowerCase().includes(q) ||
         (p.title || "").toLowerCase().includes(q)
     );
-  }, [items, search]);
+  }, [items, search, filterType]);
 
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
@@ -223,8 +231,39 @@ export default function Promotions() {
         }
       />
 
-      <div className="flex justify-end">
-        <div className="relative">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-1 bg-muted p-1 rounded-lg">
+          <Button
+            type="button"
+            variant={filterType === "ALL" ? "default" : "ghost"}
+            size="xs"
+            onClick={() => { setFilterType("ALL"); setPage(1); }}
+            className="h-7 px-3 text-xs"
+          >
+            Tất cả ({items.length})
+          </Button>
+          <Button
+            type="button"
+            variant={filterType === "VOUCHER" ? "default" : "ghost"}
+            size="xs"
+            onClick={() => { setFilterType("VOUCHER"); setPage(1); }}
+            className="h-7 px-3 text-xs"
+          >
+            Mã giảm giá ({items.filter(x => !x.pointsCost || x.pointsCost === 0).length})
+          </Button>
+          <Button
+            type="button"
+            variant={filterType === "GIFT" ? "default" : "ghost"}
+            size="xs"
+            onClick={() => { setFilterType("GIFT"); setPage(1); }}
+            className="h-7 px-3 text-xs gap-1"
+          >
+            <Coins className="size-3.5 text-amber-500" />
+            Quà đổi điểm ({items.filter(x => x.pointsCost && x.pointsCost > 0).length})
+          </Button>
+        </div>
+
+        <div className="relative w-full sm:w-64">
           <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
@@ -234,7 +273,7 @@ export default function Promotions() {
               setPage(1);
             }}
             placeholder={TEXT.searchPlaceholder}
-            className="h-8 w-64 rounded-md border border-input bg-background pl-8 pr-3 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="h-8 w-full rounded-md border border-input bg-background pl-8 pr-3 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
       </div>

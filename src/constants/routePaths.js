@@ -43,15 +43,16 @@ export const ROUTE_PATH = {
   PROMOTIONS: "/promotions",
   PROMOTIONS_DETAIL: "/promotions/:id",
 
-  REVIEWS: "/reviews",
-  REVIEWS_DETAIL: "/reviews/:id",
-
   NOTIFICATIONS: "/notifications",
   NOTIFICATIONS_DETAIL: "/notifications/:id",
 
   PAYMENTS: "/payments",
 
   LUCKY_WHEEL: "/lucky-wheel",
+
+  ACTIVITY_LOGS: "/activity-logs",
+
+  BANNERS: "/banners",
 
   NOT_FOUND: "*",
 };

@@ -14,10 +14,10 @@ export const TEXT = {
   colActions: "Thao tác",
   viewDetail: "Xem chi tiết",
   edit: "Chỉnh sửa",
-  delete: "Xoá",
-  confirmDeleteTitle: "Xoá món",
+  delete: "Ngừng bán / Xóa",
+  confirmDeleteTitle: "Ngừng kinh doanh / Ẩn món",
   confirmDeleteDesc: (name) =>
-    `Bạn có chắc muốn xoá món "${name}"? Hành động này không thể hoàn tác.`,
+    `Bạn có chắc muốn ngừng bán và ẩn món "${name}"? Món sẽ được chuyển sang trạng thái ngưng kinh doanh và ẩn khỏi thực đơn của cửa hàng.`,
   confirmYes: "Xác nhận",
   confirmNo: "Huỷ",
   createTitle: "Thêm món mới",

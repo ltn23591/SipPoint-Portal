@@ -18,8 +18,6 @@ import Inventory from "@/pages/inventory/Inventory";
 import InventoryDetail from "@/pages/inventory/InventoryDetail";
 import Promotions from "@/pages/promotions/Promotions";
 import PromotionDetail from "@/pages/promotions/PromotionDetail";
-import Reviews from "@/pages/reviews/Reviews";
-import ReviewDetail from "@/pages/reviews/ReviewDetail";
 import Notifications from "@/pages/notifications/Notifications";
 import NotificationDetail from "@/pages/notifications/NotificationDetail";
 import Payments from "@/pages/payments/Payments";
@@ -32,7 +30,8 @@ import Campaigns from "@/pages/campaigns/Campaigns";
 import Loyalty from "@/pages/loyalty/Loyalty";
 import Staff from "@/pages/staff/Staff";
 import Roles from "@/pages/roles/Roles";
-import Shifts from "@/pages/shifts/Shifts";
+import ActivityLogs from "@/pages/activityLogs/ActivityLogs";
+import Banners from "@/pages/banners/Banners";
 import Reports from "@/pages/reports/Reports";
 import Settings from "@/pages/settings/Settings";
 import Profile from "@/pages/profile/Profile";
@@ -90,9 +89,6 @@ export const router = createBrowserRouter([
       { path: ROUTE_PATH.PROMOTIONS, element: <Promotions /> },
       { path: ROUTE_PATH.PROMOTIONS_DETAIL, element: <PromotionDetail /> },
 
-      { path: ROUTE_PATH.REVIEWS, element: <Reviews /> },
-      { path: ROUTE_PATH.REVIEWS_DETAIL, element: <ReviewDetail /> },
-
       { path: ROUTE_PATH.NOTIFICATIONS, element: <Notifications /> },
       { path: ROUTE_PATH.NOTIFICATIONS_DETAIL, element: <NotificationDetail /> },
 
@@ -100,7 +96,9 @@ export const router = createBrowserRouter([
 
       { path: ROUTE_PATH.ROLES, element: <Roles /> },
 
-      { path: ROUTE_PATH.SHIFTS, element: <Shifts /> },
+      { path: ROUTE_PATH.ACTIVITY_LOGS, element: <ActivityLogs /> },
+
+      { path: ROUTE_PATH.BANNERS, element: <Banners /> },
 
       { path: ROUTE_PATH.REPORTS, element: <Reports /> },
 

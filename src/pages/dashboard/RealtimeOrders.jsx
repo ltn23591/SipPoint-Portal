@@ -1,7 +1,4 @@
-import { MoreVertical, ListFilter } from "lucide-react";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
-
+import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -13,26 +10,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/common/StatusBadge";
-import { formatVND } from "@/helpers/format";
-import { RECENT_ORDERS } from "./mockData";
+import { formatVND, formatDate } from "@/helpers/format";
+import { ROUTE_PATH } from "@/constants/routePaths";
 
-export function RealtimeOrders() {
-  const updatedLabel = format(new Date(), "'Cập nhật lúc' HH:mm:ss", {
-    locale: vi,
-  });
+export function RealtimeOrders({ orders = [], isLoading }) {
+  const navigate = useNavigate();
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between">
+      <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="text-base">
-            Danh sách đơn hàng thời gian thực
+            Đơn hàng gần đây
           </CardTitle>
-          <p className="text-xs text-muted-foreground">{updatedLabel}</p>
+          <p className="text-xs text-muted-foreground">Cập nhật thời gian thực</p>
         </div>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <ListFilter className="size-3.5" />
-          Lọc dữ liệu
+        <Button variant="outline" size="sm" onClick={() => navigate(ROUTE_PATH.ORDERS)}>
+          Xem tất cả đơn hàng
         </Button>
       </CardHeader>
       <CardContent className="px-0 pb-0">
@@ -40,43 +34,48 @@ export function RealtimeOrders() {
           <TableHeader>
             <TableRow>
               <TableHead className="pl-5">Mã đơn</TableHead>
-              <TableHead>Bàn</TableHead>
+              <TableHead>Khách hàng / Bàn</TableHead>
               <TableHead>Tổng tiền</TableHead>
               <TableHead>Trạng thái</TableHead>
               <TableHead>Thời gian</TableHead>
-              <TableHead className="w-12" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {RECENT_ORDERS.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell className="pl-5 font-semibold text-primary">
-                  {order.id}
-                </TableCell>
-                <TableCell>{order.table}</TableCell>
-                <TableCell className="font-medium">
-                  {formatVND(order.total)}
-                </TableCell>
-                <TableCell>
-                  <StatusBadge status={order.status} />
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {order.timeAgo}
-                </TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="icon-sm">
-                    <MoreVertical className="size-4" />
-                  </Button>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                  Đang tải đơn hàng...
                 </TableCell>
               </TableRow>
-            ))}
+            ) : orders.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                  Hôm nay chưa có đơn hàng nào.
+                </TableCell>
+              </TableRow>
+            ) : (
+              orders.map((order) => (
+                <TableRow key={order._id}>
+                  <TableCell className="pl-5 font-semibold text-primary">
+                    {order.code || order._id}
+                  </TableCell>
+                  <TableCell>
+                    {order.customerId?.fullName || order.tableId?.name || "Khách lẻ"}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {formatVND(order.total)}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={order.status} />
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {formatDate(order.createdAt, "HH:mm dd/MM")}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
-        <div className="border-t border-border px-5 py-3 text-center">
-          <Button variant="link" size="sm" className="text-primary">
-            Xem tất cả đơn hàng
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );

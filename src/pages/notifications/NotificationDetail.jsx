@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Send } from "lucide-react";
 import { toast } from "sonner";
 
@@ -14,8 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ROUTE_PATH } from "@/constants/routePaths";
-import { MOCK_NOTIFICATIONS } from "./mockData";
-import { CHANNEL, CHANNEL_OPTIONS, TIER_OPTIONS, TEXT } from "./constants";
+import { NotificationApi } from "@/apis";
+import { TEXT } from "./constants";
 
 function Field({ label, children }) {
   return (
@@ -26,35 +27,72 @@ function Field({ label, children }) {
   );
 }
 
-const EMPTY = { title: "", channel: CHANNEL.PUSH, tier: "ALL", body: "", scheduleAt: null };
+const EMPTY = {
+  title: "",
+  content: "",
+  recipientType: "all",
+  type: "system",
+  status: "active",
+};
 
 export default function NotificationDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const qc = useQueryClient();
   const isCreate = id === "new";
-
-  const original = isCreate ? EMPTY : MOCK_NOTIFICATIONS.find((n) => n._id === id);
   const readOnly = !isCreate && (location.state?.mode ?? "view") === "view";
-  const [form, setForm] = useState(original ?? EMPTY);
 
-  if (!original) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-        <p>Không tìm thấy thông báo này.</p>
-        <Button variant="link" onClick={() => navigate(ROUTE_PATH.NOTIFICATIONS)}>
-          {TEXT.back}
-        </Button>
-      </div>
-    );
-  }
+  const [form, setForm] = useState(EMPTY);
+
+  const { data: detailData } = useQuery({
+    queryKey: ["notification", id],
+    queryFn: async () => {
+      const res = await NotificationApi.detail(id);
+      return res?.data?.data || null;
+    },
+    enabled: !isCreate && !!id,
+  });
+
+  useEffect(() => {
+    if (detailData) {
+      setForm({
+        title: detailData.title || "",
+        content: detailData.content || detailData.body || "",
+        recipientType: detailData.recipientType || "all",
+        type: detailData.type || "system",
+        status: detailData.status || "active",
+      });
+    }
+  }, [detailData]);
 
   const set = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
+  const createMutation = useMutation({
+    mutationFn: async (payload) => {
+      const res = await NotificationApi.create(payload);
+      if (!res?.data?.success) {
+        throw new Error(res?.data?.message || "Tạo thông báo thất bại");
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Tạo thông báo mới thành công");
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      navigate(ROUTE_PATH.NOTIFICATIONS);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const handleSend = () => {
-    // Thực tế: POST /notifications/send { channel, segment, ... }
-    toast.success("Đã đưa thông báo vào hàng đợi gửi");
-    navigate(ROUTE_PATH.NOTIFICATIONS);
+    if (!form.title.trim() || !form.content.trim()) return;
+    createMutation.mutate({
+      title: form.title.trim(),
+      content: form.content.trim(),
+      recipientType: form.recipientType,
+      type: form.type,
+      status: form.status,
+    });
   };
 
   return (
@@ -67,48 +105,45 @@ export default function NotificationDetail() {
           <h1 className="text-xl font-bold text-secondary">
             {isCreate ? TEXT.createTitle : TEXT.detailTitle}
           </h1>
-          {!isCreate && <p className="text-sm text-muted-foreground">{original.title}</p>}
+          {!isCreate && detailData && <p className="text-sm text-muted-foreground">{detailData.title}</p>}
         </div>
       </div>
 
       <div className="space-y-5 rounded-xl border bg-card p-6 shadow-sm">
-        <Field label="Tiêu đề">
-          <Input value={form.title ?? ""} disabled={readOnly} onChange={(e) => set("title", e.target.value)} />
+        <Field label="Tiêu đề thông báo">
+          <Input value={form.title ?? ""} disabled={readOnly} onChange={(e) => set("title", e.target.value)} placeholder="Nhập tiêu đề..." />
         </Field>
 
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Kênh gửi">
-            <Select value={form.channel} onValueChange={(v) => set("channel", v)} disabled={readOnly}>
+          <Field label="Đối tượng nhận">
+            <Select value={form.recipientType} onValueChange={(v) => set("recipientType", v)} disabled={readOnly}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {CHANNEL_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">Tất cả khách hàng & nhân viên</SelectItem>
+                <SelectItem value="customer">Chỉ Khách hàng</SelectItem>
+                <SelectItem value="staff">Chỉ Nhân viên</SelectItem>
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Phân khúc khách">
-            <Select value={form.tier} onValueChange={(v) => set("tier", v)} disabled={readOnly}>
+
+          <Field label="Loại thông báo">
+            <Select value={form.type} onValueChange={(v) => set("type", v)} disabled={readOnly}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIER_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="system">Hệ thống</SelectItem>
+                <SelectItem value="promotion">Khuyến mãi</SelectItem>
+                <SelectItem value="order">Đơn hàng</SelectItem>
               </SelectContent>
             </Select>
           </Field>
         </div>
 
-        <Field label="Nội dung">
-          <Textarea rows={4} value={form.body ?? ""} disabled={readOnly} onChange={(e) => set("body", e.target.value)} />
+        <Field label="Nội dung thông báo">
+          <Textarea rows={4} value={form.content ?? ""} disabled={readOnly} onChange={(e) => set("content", e.target.value)} placeholder="Nhập nội dung chi tiết..." />
         </Field>
       </div>
 
@@ -117,9 +152,9 @@ export default function NotificationDetail() {
           <Button variant="outline" onClick={() => navigate(ROUTE_PATH.NOTIFICATIONS)}>
             {TEXT.cancel}
           </Button>
-          <Button onClick={handleSend} disabled={!form.title.trim() || !form.body.trim()} className="gap-1.5">
+          <Button onClick={handleSend} disabled={createMutation.isPending || !form.title.trim() || !form.content.trim()} className="gap-1.5">
             <Send className="size-4" />
-            {TEXT.save}
+            {createMutation.isPending ? "Đang gửi..." : TEXT.save}
           </Button>
         </div>
       )}

@@ -1,16 +1,33 @@
-# React + Vite
+﻿# SipPoint - Admin & POS Management Portal
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+He thong Quan tri & Van hanh Cua hang (Admin Portal / POS) cho chuoi SipPoint Coffee & Tea.
 
-Currently, two official plugins are available:
+## Tinh nang chinh
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Dashboard Realtime: Thong ke Doanh thu, Don hang, Khach hang moi, Top 5 mon ban chay.
+- POS Don hang Kanban: Quan ly don hang theo cot, doi trang thai, in hoa don nhiet 80mm, xem ghi chu mon.
+- Quan ly Thuc don & Ton kho: San pham, Danh muc, Topping/Size, Canh bao sap het hang.
+- Quan ly Khuyen mai & Banner: Voucher, Qua doi diem, Banner quang cao dong.
+- Quan ly Membership: Hang thanh vien (Dong, Bac, Vang, Bach Kim) va quy dinh tich diem.
+- Quan ly Nhan vien & Phan quyen (RBAC): Tao tai khoan nhan vien, phan quyen theo vai tro.
+- Quan ly Ca lam (Shifts) & Nhat ky hoat dong (Activity Logs).
+- Bao cao & Xuat Excel: Doanh thu, don hang, ca lam, khach hang ra file .xlsx.
 
-## React Compiler
+## Cong nghe su dung
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React.js (Vite)
+- TailwindCSS, Lucide Icons, Shadcn UI components
+- TanStack Query (React Query)
+- Socket.io-client (Socket realtime updates)
+- SheetJS (XLSX export)
 
-## Expanding the ESLint configuration
+## Huong dan cai dat & chay
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+# Cai dat dependencies
+npm install
+
+# Chay moi truong dev
+npm run dev
+```
+

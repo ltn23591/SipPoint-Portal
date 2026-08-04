@@ -80,6 +80,10 @@ export const ProductsApi = {
     const endpoint = `/api/v1/products/${id}`;
     return apiCall(API_METHOD.DELETE, endpoint);
   },
+  restore: (id) => {
+    const endpoint = `/api/v1/products/${id}/restore`;
+    return apiCall(API_METHOD.PATCH, endpoint);
+  },
   importFile: (payload) => {
     const endpoint = `/api/v1/products/import`;
     return apiCall(API_METHOD.POST, endpoint, payload, {
@@ -447,6 +451,14 @@ export const StoreApi = {
     const endpoint = `/api/v1/store/delete/${id}`;
     return apiCall(API_METHOD.DELETE, endpoint);
   },
+  getConfig: () => {
+    const endpoint = `/api/v1/store/config`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  updateConfig: (payload) => {
+    const endpoint = `/api/v1/store/config`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
   detail: (id) => {
     const endpoint = `/api/v1/store/details/${id}`;
     return apiCall(API_METHOD.GET, endpoint);
@@ -737,5 +749,24 @@ export const ReportApi = {
       responseType: "blob",
       baseURL: VITE_APP_REPORT_API_URL || undefined,
     });
+  },
+};
+
+export const BannerApi = {
+  getAll: () => {
+    const endpoint = `/api/v1/banners`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  create: (payload) => {
+    const endpoint = `/api/v1/banners`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  update: (id, payload) => {
+    const endpoint = `/api/v1/banners/${id}`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+  delete: (id) => {
+    const endpoint = `/api/v1/banners/${id}`;
+    return apiCall(API_METHOD.DELETE, endpoint);
   },
 };

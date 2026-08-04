@@ -40,7 +40,7 @@ export function EmployeeFormDialog({ open, onOpenChange, employee, roles = [], o
         name: employee?.name ?? "",
         email: employee?.email ?? "",
         password: "",
-        role: employee?.roleId?.code ?? employee?.role ?? "",
+        role: employee?.roleId?._id ?? employee?.roleId?.code ?? employee?.roleId ?? employee?.role ?? "",
         status: employee?.status ?? ACTIVE_STATUS.ACTIVE,
       });
       setError("");
@@ -60,6 +60,7 @@ export function EmployeeFormDialog({ open, onOpenChange, employee, roles = [], o
       name,
       email,
       role: form.role,
+      roleId: form.role,
       status: form.status,
     };
     if (form.password) payload.password = form.password;
@@ -147,7 +148,7 @@ export function EmployeeFormDialog({ open, onOpenChange, employee, roles = [], o
                 </SelectTrigger>
                 <SelectContent>
                   {roles.map((r) => (
-                    <SelectItem key={r._id || r.code} value={r.code}>
+                    <SelectItem key={r._id || r.code} value={r._id || r.code}>
                       {r.name}
                     </SelectItem>
                   ))}

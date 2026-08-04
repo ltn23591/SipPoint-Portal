@@ -6,7 +6,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { Eye, Pencil, Trash2, Plus, Search } from "lucide-react";
+import { Eye, Pencil, Trash2, Plus, Search, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,7 @@ export default function Menu() {
   const [searchInput, setSearchInput] = useState("");
   const keyword = useDebounce(searchInput, 400);
   const [category, setCategory] = useState(ALL_CATEGORIES);
+  const [statusFilter, setStatusFilter] = useState("active");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [deleting, setDeleting] = useState(null);
@@ -73,8 +74,9 @@ export default function Menu() {
       limit: pageSize,
       ...(keyword ? { keyword } : {}),
       ...(category !== ALL_CATEGORIES ? { category } : {}),
+      ...(statusFilter === "deleted" ? { status: "deleted" } : statusFilter === "all" ? { includeDeleted: true } : {}),
     }),
-    [page, pageSize, keyword, category]
+    [page, pageSize, keyword, category, statusFilter]
   );
 
   const { data, isLoading, isError } = useQuery({
@@ -101,9 +103,24 @@ export default function Menu() {
       return res.data;
     },
     onSuccess: (res) => {
-      toast.success(res?.message || "Đã xoá món.");
+      toast.success(res?.message || "Đã ẩn và ngừng kinh doanh món này.");
       qc.invalidateQueries({ queryKey: ["products"] });
       setDeleting(null);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: async (id) => {
+      const res = await ProductsApi.restore(id);
+      if (!res?.data?.success) {
+        throw new Error(res?.data?.message || "Khôi phục món thất bại.");
+      }
+      return res.data;
+    },
+    onSuccess: (res) => {
+      toast.success(res?.message || "Đã khôi phục sản phẩm kinh doanh trở lại.");
+      qc.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (err) => toast.error(err.message),
   });
@@ -167,9 +184,11 @@ export default function Menu() {
     {
       key: "status",
       title: TEXT.colStatus,
-      width: 130,
+      width: 150,
       render: (row) =>
-        isProductActive(row) ? (
+        row.isDeleted ? (
+          <Badge variant="destructive">Đã ẩn / Ngừng bán</Badge>
+        ) : isProductActive(row) ? (
           <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
             Đang bán
           </Badge>
@@ -180,52 +199,71 @@ export default function Menu() {
     {
       key: "actions",
       title: TEXT.colActions,
-      width: 120,
+      width: 130,
       align: "center",
       render: (row) => (
         <TooltipProvider delayDuration={300}>
           <div className="flex items-center justify-center gap-0.5">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="size-8 text-muted-foreground hover:text-foreground"
-                  onClick={() => goDetail(row._id, "view")}
-                >
-                  <Eye className="size-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{TEXT.viewDetail}</TooltipContent>
-            </Tooltip>
+            {row.isDeleted ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                    disabled={restoreMutation.isPending}
+                    onClick={() => restoreMutation.mutate(row._id)}
+                  >
+                    <RotateCcw className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Khôi phục kinh doanh</TooltipContent>
+              </Tooltip>
+            ) : (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="size-8 text-muted-foreground hover:text-foreground"
+                      onClick={() => goDetail(row._id, "view")}
+                    >
+                      <Eye className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">{TEXT.viewDetail}</TooltipContent>
+                </Tooltip>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="size-8 text-muted-foreground hover:text-foreground"
-                  onClick={() => goDetail(row._id, "edit")}
-                >
-                  <Pencil className="size-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{TEXT.edit}</TooltipContent>
-            </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="size-8 text-muted-foreground hover:text-foreground"
+                      onClick={() => goDetail(row._id, "edit")}
+                    >
+                      <Pencil className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">{TEXT.edit}</TooltipContent>
+                </Tooltip>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="size-8 text-destructive hover:text-destructive"
-                  onClick={() => setDeleting(row)}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{TEXT.delete}</TooltipContent>
-            </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="size-8 text-destructive hover:text-destructive"
+                      onClick={() => setDeleting(row)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">{TEXT.delete}</TooltipContent>
+                </Tooltip>
+              </>
+            )}
           </div>
         </TooltipProvider>
       ),
@@ -247,6 +285,23 @@ export default function Menu() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center justify-end gap-2">
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => {
+            setStatusFilter(v);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="h-8 w-44">
+            <SelectValue placeholder="Lọc trạng thái" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">Đang kinh doanh</SelectItem>
+            <SelectItem value="deleted">Đã ẩn / Ngừng bán</SelectItem>
+            <SelectItem value="all">Tất cả sản phẩm</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Select
           value={category}
           onValueChange={(v) => {
