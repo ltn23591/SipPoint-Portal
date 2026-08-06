@@ -22,6 +22,7 @@ import Notifications from "@/pages/notifications/Notifications";
 import NotificationDetail from "@/pages/notifications/NotificationDetail";
 import Payments from "@/pages/payments/Payments";
 import LuckyWheel from "@/pages/luckyWheel/LuckyWheel";
+import GameForm from "@/pages/luckyWheel/GameForm";
 import Tables from "@/pages/tables/Tables";
 import Customers from "@/pages/customers/Customers";
 import Segments from "@/pages/segments/Segments";
@@ -82,6 +83,8 @@ export const router = createBrowserRouter([
       { path: ROUTE_PATH.PAYMENTS, element: <Payments /> },
 
       { path: ROUTE_PATH.LUCKY_WHEEL, element: <LuckyWheel /> },
+      { path: ROUTE_PATH.LUCKY_WHEEL_CREATE, element: <GameForm /> },
+      { path: ROUTE_PATH.LUCKY_WHEEL_EDIT, element: <GameForm /> },
 
       { path: ROUTE_PATH.INVENTORY, element: <Inventory /> },
       { path: ROUTE_PATH.INVENTORY_DETAIL, element: <InventoryDetail /> },
