@@ -1,4 +1,4 @@
-import { preProcessData, preProcessDataWithCustom, transferListTreeData } from "@/helpers/commonHelper";
+import { preProcessData } from "@/helpers/commonHelper";
 import apiCall from "./config";
 import { API_METHOD } from "@/constants/application";
 
@@ -88,6 +88,80 @@ export const ProductsApi = {
     const endpoint = `/api/v1/products/import`;
     return apiCall(API_METHOD.POST, endpoint, payload, {
       "Content-Type": "multipart/form-data",
+    });
+  },
+};
+
+// Nguyên liệu & Kho (REST số nhiều: /api/v1/materials).
+// getAll nhận query: page, limit, keyword, status (in_stock/low/out_of_stock), isActive.
+export const MaterialApi = {
+  getAll: (params, signal) => {
+    const endpoint = `/api/v1/materials`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+  getLowStock: (signal) => {
+    const endpoint = `/api/v1/materials/low-stock`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { signal });
+  },
+  getById: (id) => {
+    const endpoint = `/api/v1/materials/${id}`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  create: (payload) => {
+    const endpoint = `/api/v1/materials`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  update: (id, payload) => {
+    const endpoint = `/api/v1/materials/${id}`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+  delete: (id) => {
+    const endpoint = `/api/v1/materials/${id}`;
+    return apiCall(API_METHOD.DELETE, endpoint);
+  },
+  restore: (id) => {
+    const endpoint = `/api/v1/materials/${id}/restore`;
+    return apiCall(API_METHOD.PATCH, endpoint);
+  },
+  // Nhập kho: payload = { quantity (>0), cost?, note? }
+  importStock: (id, payload) => {
+    const endpoint = `/api/v1/materials/${id}/import`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
+  },
+  // Điều chỉnh tồn thủ công: payload = { quantityChange (khác 0, âm để giảm), note? }
+  adjustStock: (id, payload) => {
+    const endpoint = `/api/v1/materials/${id}/adjust`;
+    return apiCall(API_METHOD.PATCH, endpoint, payload);
+  },
+  // Lịch sử biến động tồn kho (sổ cái): params = { type?, page, limit }
+  getMovements: (id, params, signal) => {
+    const endpoint = `/api/v1/materials/${id}/movements`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+};
+
+// Công thức sản phẩm (định mức nguyên liệu) — /api/v1/recipes.
+export const RecipeApi = {
+  getByProduct: (productId) => {
+    const endpoint = `/api/v1/recipes/product/${productId}`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  // payload = { items: [{ materialId, quantity }] }
+  upsert: (productId, payload) => {
+    const endpoint = `/api/v1/recipes/product/${productId}`;
+    return apiCall(API_METHOD.PUT, endpoint, payload);
+  },
+  remove: (productId) => {
+    const endpoint = `/api/v1/recipes/product/${productId}`;
+    return apiCall(API_METHOD.DELETE, endpoint);
+  },
+  // Khả năng phục vụ (max makeable) cho danh sách sản phẩm: productIds là mảng hoặc chuỗi phẩy.
+  availability: (productIds, signal) => {
+    const ids = Array.isArray(productIds) ? productIds.join(",") : productIds;
+    const endpoint = `/api/v1/recipes/availability`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, {
+      params: { productIds: ids },
+      signal,
     });
   },
 };
@@ -319,8 +393,6 @@ export const MembershipProgramApi = {
   },
 };
 
-// Nhân viên (REST số nhiều: /api/v1/employees) — KHÁC StaffApi cũ (RPC /api/v1/staff/*).
-// `role` là code vai trò (chuỗi thường: admin/cashier/barista); `roleId` được populate khi GET.
 export const EmployeeApi = {
   getAll: (params, signal) => {
     const endpoint = `/api/v1/employees`;
@@ -748,6 +820,28 @@ export const ReportApi = {
     return apiCall(API_METHOD.POST, endpoint, payload, null, null, {
       responseType: "blob",
       baseURL: VITE_APP_REPORT_API_URL || undefined,
+    });
+  },
+  // Tổng quan tồn kho (giá trị tồn, số nguyên liệu sắp/hết hàng, danh sách cần nhập).
+  inventoryDashboard: () => {
+    const endpoint = `/api/v1/report/inventory-dashboard`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  // Báo cáo tiêu hao nguyên liệu (tổng hợp theo nguyên liệu): params = { startDate?, endDate? }
+  materialConsumption: (params) => {
+    const endpoint = `/api/v1/report/material-consumption`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params });
+  },
+  // Tiêu hao theo ngày (cho biểu đồ): params = { startDate?, endDate? }
+  materialConsumptionSeries: (params) => {
+    const endpoint = `/api/v1/report/material-consumption-series`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params });
+  },
+  exportMaterialConsumption: (params) => {
+    const endpoint = `/api/v1/report/export/material-consumption`;
+    return apiCall(API_METHOD.POST, endpoint, null, null, null, {
+      responseType: "blob",
+      params,
     });
   },
 };

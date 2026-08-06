@@ -54,6 +54,32 @@ export const SocketProvider = ({ children }) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     });
 
+    // Cảnh báo nguyên liệu sắp hết / đã hết
+    socketInstance.on("low_stock", (payload) => {
+      console.log("🔔 [Socket.io] Low stock:", payload);
+      const isOut = payload?.status === "out_of_stock";
+      toast[isOut ? "error" : "warning"](
+        isOut
+          ? `Nguyên liệu "${payload?.name}" đã hết hàng!`
+          : `Nguyên liệu "${payload?.name}" sắp hết (còn ${payload?.onHand} ${payload?.unit || ""}).`,
+        { duration: 8000 }
+      );
+      queryClient.invalidateQueries({ queryKey: ["materials"] });
+    });
+
+    // Sản phẩm bị chuyển sang Hết hàng do thiếu nguyên liệu
+    socketInstance.on("product_out_of_stock", (payload) => {
+      console.log("🔔 [Socket.io] Product out of stock:", payload);
+      toast.error(
+        `Có món chuyển sang Hết hàng do thiếu nguyên liệu${
+          payload?.materialName ? ` "${payload.materialName}"` : ""
+        }.`,
+        { duration: 8000 }
+      );
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["materials"] });
+    });
+
     socketInstance.on("disconnect", () => {
       console.log("🔌 [Socket.io] Disconnected from server");
     });
@@ -62,6 +88,8 @@ export const SocketProvider = ({ children }) => {
       socketInstance.off("connect");
       socketInstance.off("order_created");
       socketInstance.off("order_status_updated");
+      socketInstance.off("low_stock");
+      socketInstance.off("product_out_of_stock");
       socketInstance.off("disconnect");
     };
   }, []);
