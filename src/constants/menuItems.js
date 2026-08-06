@@ -47,7 +47,7 @@ export const MENU_ITEMS = [
   { key: "promotions", label: "Khuyến mãi", icon: BadgePercent, path: ROUTE_PATH.PROMOTIONS, permission: "manage_promotions" },
   { key: "notifications", label: "Thông báo", icon: Bell, path: ROUTE_PATH.NOTIFICATIONS, permission: "manage_store" },
   { key: "banners", label: "Banner Quảng cáo", icon: Image, path: ROUTE_PATH.BANNERS, permission: "manage_promotions" },
-  { key: "lucky-wheel", label: "Vòng quay may mắn", icon: Dices, path: ROUTE_PATH.LUCKY_WHEEL, permission: "manage_promotions" },
+  { key: "lucky-wheel", label: "Trò chơi may mắn", icon: Dices, path: ROUTE_PATH.LUCKY_WHEEL, permission: "manage_promotions" },
 
   { type: "header", key: "grp-admin", label: "Quản trị" },
   { key: "staff", label: "Nhân viên", icon: UserCog, path: ROUTE_PATH.STAFF, permission: "manage_staff" },

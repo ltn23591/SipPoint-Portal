@@ -259,6 +259,41 @@ export const PRIZE_TYPE_LABEL = {
   [PRIZE_TYPE.NONE]: "Chúc may mắn",
 };
 
+// ─── Trò chơi may mắn (Lucky Game) ──────────────────────────────────────────
+export const GAME_STATUS = {
+  DRAFT: "DRAFT",
+  PUBLISHED: "PUBLISHED",
+  PAUSED: "PAUSED",
+  EXPIRED: "EXPIRED",
+  CANCELLED: "CANCELLED",
+};
+
+export const GAME_STATUS_LABEL = {
+  [GAME_STATUS.DRAFT]: "Nháp",
+  [GAME_STATUS.PUBLISHED]: "Đã xuất bản",
+  [GAME_STATUS.PAUSED]: "Tạm dừng",
+  [GAME_STATUS.EXPIRED]: "Đã hết hạn",
+  [GAME_STATUS.CANCELLED]: "Đã hủy",
+};
+
+// Loại phần thưởng của mỗi ô (nhãn theo giao diện: Quà tặng / Xu / Lời chúc)
+export const GAME_REWARD_TYPE = {
+  VOUCHER: "VOUCHER",
+  POINTS: "POINTS",
+  MESSAGE: "MESSAGE",
+};
+
+export const GAME_REWARD_TYPE_LABEL = {
+  [GAME_REWARD_TYPE.VOUCHER]: "Quà tặng",
+  [GAME_REWARD_TYPE.POINTS]: "Xu",
+  [GAME_REWARD_TYPE.MESSAGE]: "Lời chúc",
+};
+
+export const GAME_ACTIVITY_TYPE = {
+  ORDER_COMPLETED: "ORDER_COMPLETED",
+  DAILY_CHECKIN: "DAILY_CHECKIN",
+};
+
 // ─── Nhóm khách hàng (Module 3) ─────────────────────────────────────────────
 export const GENDER = {
   MALE: "male",
