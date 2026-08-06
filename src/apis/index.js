@@ -215,38 +215,47 @@ export const OrdersApi = {
   },
 };
 
-// Vòng quay may mắn (REST số nhiều: /api/v1/lucky-wheels) — Module 5.
-// Admin: CRUD + status + log người trúng. Khách: active/spin/me/spins.
-export const LuckyWheelApi = {
+// Trò chơi may mắn (REST số nhiều: /api/v1/games).
+// Admin: CRUD + chuyển trạng thái (publish/pause/resume/cancel) + danh sách trúng thưởng + cấp lượt.
+export const GameApi = {
   getAll: (params, signal) => {
-    const endpoint = `/api/v1/lucky-wheels`;
+    const endpoint = `/api/v1/games`;
     return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
   },
   getById: (id) => {
-    const endpoint = `/api/v1/lucky-wheels/${id}`;
+    const endpoint = `/api/v1/games/${id}`;
     return apiCall(API_METHOD.GET, endpoint);
   },
   create: (payload) => {
-    const endpoint = `/api/v1/lucky-wheels`;
+    const endpoint = `/api/v1/games`;
     return apiCall(API_METHOD.POST, endpoint, payload);
   },
   update: (id, payload) => {
-    const endpoint = `/api/v1/lucky-wheels/${id}`;
+    const endpoint = `/api/v1/games/${id}`;
     return apiCall(API_METHOD.PUT, endpoint, payload);
   },
   delete: (id) => {
-    const endpoint = `/api/v1/lucky-wheels/${id}`;
+    const endpoint = `/api/v1/games/${id}`;
     return apiCall(API_METHOD.DELETE, endpoint);
   },
-  // payload = { status: "ACTIVE" | "FINISHED" }
-  updateStatus: (id, payload) => {
-    const endpoint = `/api/v1/lucky-wheels/${id}/status`;
-    return apiCall(API_METHOD.PATCH, endpoint, payload);
-  },
-  // Log người trúng của 1 vòng quay (admin)
-  getSpins: (id, params, signal) => {
-    const endpoint = `/api/v1/lucky-wheels/${id}/spins`;
+  publish: (id) => apiCall(API_METHOD.PATCH, `/api/v1/games/${id}/publish`),
+  pause: (id) => apiCall(API_METHOD.PATCH, `/api/v1/games/${id}/pause`),
+  resume: (id) => apiCall(API_METHOD.PATCH, `/api/v1/games/${id}/resume`),
+  cancel: (id) => apiCall(API_METHOD.PATCH, `/api/v1/games/${id}/cancel`),
+  // Danh sách trúng thưởng (gộp theo khách)
+  getWinners: (id, params, signal) => {
+    const endpoint = `/api/v1/games/${id}/winners`;
     return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+  // Chi tiết phần thưởng 1 khách đã trúng trong trò chơi
+  getWinnerRewards: (id, customerId) => {
+    const endpoint = `/api/v1/games/${id}/winners/${customerId}`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  // Cấp thêm lượt cho một khách: payload = { customerId, quantity }
+  grantBonusTurns: (id, payload) => {
+    const endpoint = `/api/v1/games/${id}/bonus-turn`;
+    return apiCall(API_METHOD.POST, endpoint, payload);
   },
 };
 
@@ -413,26 +422,6 @@ export const EmployeeApi = {
   delete: (id) => {
     const endpoint = `/api/v1/employees/${id}`;
     return apiCall(API_METHOD.DELETE, endpoint);
-  },
-};
-
-// Ca làm việc (/api/v1/shifts) — mở/đóng ca, tiền quỹ.
-export const ShiftApi = {
-  search: (params, signal) => {
-    const endpoint = `/api/v1/shifts/search`;
-    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
-  },
-  open: (payload) => {
-    const endpoint = `/api/v1/shifts/open`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
-  },
-  detail: (id) => {
-    const endpoint = `/api/v1/shifts/${id}/detail`;
-    return apiCall(API_METHOD.GET, endpoint);
-  },
-  close: (id, payload) => {
-    const endpoint = `/api/v1/shifts/${id}/close`;
-    return apiCall(API_METHOD.PUT, endpoint, payload);
   },
 };
 

@@ -1,13 +1,14 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2, Play, Square, Trophy } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Copy, Eye, Dices } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -17,44 +18,75 @@ import {
 } from "@/components/ui/select";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatDate } from "@/helpers/format";
-import {
-  LUCKY_WHEEL_STATUS,
-  LUCKY_WHEEL_STATUS_LABEL,
-  WHEEL_TARGET_TYPE,
-  WHEEL_TARGET_TYPE_LABEL,
-} from "@/constants/application";
-import { LuckyWheelApi } from "@/apis";
-import { LuckyWheelFormDialog } from "./LuckyWheelFormDialog";
-import { WheelSpinsDialog } from "./WheelSpinsDialog";
+import { ROUTE_PATH } from "@/constants/routePaths";
+import { GAME_STATUS, GAME_STATUS_LABEL } from "@/constants/application";
+import { GameApi } from "@/apis";
+import { GameWinnersDialog } from "./GameWinnersDialog";
 
 const ALL_STATUS = "__all__";
 
-const STATUS_BADGE_CLASS = {
-  [LUCKY_WHEEL_STATUS.DRAFT]: "bg-muted text-muted-foreground",
-  [LUCKY_WHEEL_STATUS.ACTIVE]: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  [LUCKY_WHEEL_STATUS.FINISHED]: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
-};
-
-const targetLabel = (w) => {
-  if (w.targetType === WHEEL_TARGET_TYPE.SEGMENT)
-    return `${WHEEL_TARGET_TYPE_LABEL.SEGMENT} (${(w.segmentIds || []).length})`;
-  if (w.targetType === WHEEL_TARGET_TYPE.TIER)
-    return `${WHEEL_TARGET_TYPE_LABEL.TIER} (${(w.tierIds || []).length})`;
-  return WHEEL_TARGET_TYPE_LABEL.ALL;
+// Chuyển detail -> payload tạo mới (dùng cho Nhân bản)
+const toCreatePayload = (g) => {
+  const rewards = (g.rewards || [])
+    .slice()
+    .sort((a, b) => a.index - b.index)
+    .map((r) => ({
+      displayName: r.displayName,
+      type: r.type,
+      voucherId: typeof r.voucherId === "object" ? r.voucherId?._id : r.voucherId,
+      rewardValue: r.rewardValue,
+      message: r.message,
+      totalReward: r.totalReward,
+      quantity: r.quantity,
+      isDefault: r.isDefault,
+      allowManyTimes: r.allowManyTimes,
+    }));
+  const idToIndex = {};
+  (g.rewards || []).slice().sort((a, b) => a.index - b.index).forEach((r, i) => {
+    if (r._id) idToIndex[String(r._id)] = i;
+  });
+  const distributions = (g.distributions || []).map((d) => ({
+    gameRewardIndex: idToIndex[String(typeof d.gameRewardId === "object" ? d.gameRewardId?._id : d.gameRewardId)] ?? 0,
+    segmentId: typeof d.segmentId === "object" ? d.segmentId?._id : d.segmentId,
+    rate: d.rate,
+    maxQuantity: d.maxQuantity,
+    dateFrom: d.dateFrom,
+    dateTo: d.dateTo,
+    allowManyTimes: d.allowManyTimes,
+  }));
+  return {
+    name: `${g.name} (sao chép)`,
+    description: g.description,
+    backgroundUrl: g.backgroundUrl,
+    gameUrl: g.gameUrl,
+    content: g.content,
+    startDate: g.startDate,
+    endDate: g.endDate,
+    timeFrom: g.timeFrom,
+    timeTo: g.timeTo,
+    defaultTurnCount: g.defaultTurnCount,
+    appliedSegmentIds: (g.appliedSegmentIds || []).map((s) => (typeof s === "object" ? s._id : s)),
+    rewards,
+    distributions,
+    activityConfigs: (g.activityConfigs || []).map((c) => ({
+      activityType: c.activityType,
+      turnQuantity: c.turnQuantity,
+      dailyLimit: c.dailyLimit,
+      isActive: c.isActive,
+    })),
+  };
 };
 
 export default function LuckyWheel() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
   const search = useDebounce(searchInput, 400);
   const [status, setStatus] = useState(ALL_STATUS);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [spinsWheel, setSpinsWheel] = useState(null);
-  const [confirming, setConfirming] = useState(null); // { type, wheel }
+  const [winnersGame, setWinnersGame] = useState(null);
+  const [confirming, setConfirming] = useState(null);
 
   const params = useMemo(
     () => ({
@@ -67,187 +99,191 @@ export default function LuckyWheel() {
   );
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["lucky-wheels", params],
+    queryKey: ["games", params],
     queryFn: async ({ signal }) => {
-      const res = await LuckyWheelApi.getAll(params, signal);
-      if (!res?.data?.success) {
-        throw new Error(res?.data?.message || "Không tải được danh sách vòng quay.");
-      }
+      const res = await GameApi.getAll(params, signal);
+      if (!res?.data?.success) throw new Error(res?.data?.message || "Không tải được danh sách trò chơi.");
       return { list: res.data.data || [], total: res.data.pagination?.total ?? 0 };
     },
     placeholderData: keepPreviousData,
   });
 
-  const saveMutation = useMutation({
-    mutationFn: async (payload) => {
-      const res = editing?._id
-        ? await LuckyWheelApi.update(editing._id, payload)
-        : await LuckyWheelApi.create(payload);
-      if (!res?.data?.success) throw new Error(res?.data?.message || "Lưu vòng quay thất bại.");
+  const toggleMutation = useMutation({
+    mutationFn: async (g) => {
+      let res;
+      if (g.status === GAME_STATUS.DRAFT) res = await GameApi.publish(g._id);
+      else if (g.status === GAME_STATUS.PUBLISHED) res = await GameApi.pause(g._id);
+      else if (g.status === GAME_STATUS.PAUSED) res = await GameApi.resume(g._id);
+      else throw new Error("Trò chơi đã kết thúc, không thể đổi trạng thái.");
+      if (!res?.data?.success) throw new Error(res?.data?.message || "Đổi trạng thái thất bại.");
       return res.data;
     },
     onSuccess: (res) => {
-      toast.success(res?.message || "Đã lưu vòng quay.");
-      qc.invalidateQueries({ queryKey: ["lucky-wheels"] });
-      setFormOpen(false);
-      setEditing(null);
+      toast.success(res?.message || "Đã cập nhật trạng thái.");
+      qc.invalidateQueries({ queryKey: ["games"] });
     },
     onError: (err) => toast.error(err.message),
   });
 
-  const actionMutation = useMutation({
-    mutationFn: async ({ type, wheel }) => {
-      let res;
-      if (type === "activate") res = await LuckyWheelApi.updateStatus(wheel._id, { status: LUCKY_WHEEL_STATUS.ACTIVE });
-      else if (type === "finish") res = await LuckyWheelApi.updateStatus(wheel._id, { status: LUCKY_WHEEL_STATUS.FINISHED });
-      else res = await LuckyWheelApi.delete(wheel._id);
-      if (!res?.data?.success) throw new Error(res?.data?.message || "Thao tác thất bại.");
+  const cloneMutation = useMutation({
+    mutationFn: async (g) => {
+      const detailRes = await GameApi.getById(g._id);
+      if (!detailRes?.data?.success) throw new Error("Không tải được cấu hình để nhân bản.");
+      const res = await GameApi.create(toCreatePayload(detailRes.data.data));
+      if (!res?.data?.success) throw new Error(res?.data?.message || "Nhân bản thất bại.");
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Đã nhân bản trò chơi (bản nháp).");
+      qc.invalidateQueries({ queryKey: ["games"] });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (g) => {
+      const res = await GameApi.delete(g._id);
+      if (!res?.data?.success) throw new Error(res?.data?.message || "Xóa thất bại.");
       return res.data;
     },
     onSuccess: (res) => {
-      toast.success(res?.message || "Thao tác thành công.");
-      qc.invalidateQueries({ queryKey: ["lucky-wheels"] });
+      toast.success(res?.message || "Đã xóa trò chơi.");
+      qc.invalidateQueries({ queryKey: ["games"] });
       setConfirming(null);
     },
     onError: (err) => toast.error(err.message),
   });
 
-  const CONFIRM_TEXT = {
-    activate: {
-      title: "Kích hoạt vòng quay",
-      description: `Mở "${confirming?.wheel?.name}" cho khách quay? Sau khi kích hoạt sẽ không sửa được cấu hình.`,
-      confirmText: "Kích hoạt",
-      variant: "default",
-    },
-    finish: {
-      title: "Kết thúc vòng quay",
-      description: `Kết thúc "${confirming?.wheel?.name}"? Khách sẽ không quay được nữa.`,
-      confirmText: "Kết thúc",
-      variant: "destructive",
-    },
-    delete: {
-      title: "Xóa vòng quay",
-      description: `Xóa vòng quay nháp "${confirming?.wheel?.name}"?`,
-      confirmText: "Xóa",
-      variant: "destructive",
-    },
-  };
-
   const columns = [
     {
+      key: "image",
+      title: "Hình ảnh",
+      width: 70,
+      render: (g) =>
+        g.backgroundUrl ? (
+          <img src={g.backgroundUrl} alt="" className="size-10 rounded object-cover" />
+        ) : (
+          <div className="flex size-10 items-center justify-center rounded bg-muted text-muted-foreground">
+            <Dices className="size-4" />
+          </div>
+        ),
+    },
+    {
       key: "name",
-      title: "Vòng quay",
-      minWidth: 180,
-      render: (w) => (
+      title: "Tên trò chơi",
+      minWidth: 200,
+      render: (g) => (
         <div>
-          <p className="font-medium text-foreground">{w.name}</p>
-          {w.description ? <p className="text-xs text-muted-foreground">{w.description}</p> : null}
+          <p className="font-semibold text-foreground">{g.name}</p>
+          <p className="text-xs text-muted-foreground">
+            {GAME_STATUS_LABEL[g.status] || g.status}
+          </p>
         </div>
       ),
     },
     {
-      key: "target",
-      title: "Phạm vi",
-      minWidth: 150,
-      render: (w) => <span className="text-sm">{targetLabel(w)}</span>,
+      key: "display",
+      title: "Ngày hiển thị",
+      minWidth: 170,
+      render: (g) => (
+        <div className="text-sm">
+          <p>{(g.timeFrom || "00:00")} - {(g.timeTo || "23:59")}</p>
+          <p className="text-muted-foreground">
+            {g.startDate ? formatDate(g.startDate) : "—"} - {g.endDate ? formatDate(g.endDate) : "—"}
+          </p>
+        </div>
+      ),
     },
     {
-      key: "slots",
-      title: "Số ô",
-      width: 80,
-      align: "right",
-      render: (w) => (w.slots || []).length,
+      key: "spins",
+      title: "Số lượt tham gia",
+      width: 130,
+      align: "center",
+      render: (g) => g.spinCount ?? 0,
     },
     {
-      key: "endDate",
-      title: "Kết thúc",
-      width: 110,
-      render: (w) => (w.endDate ? formatDate(w.endDate) : "—"),
+      key: "winners",
+      title: "Danh sách trúng thưởng",
+      width: 150,
+      align: "center",
+      render: (g) => (
+        <button className="text-primary hover:underline" onClick={() => setWinnersGame(g)}>
+          Xem
+        </button>
+      ),
     },
     {
-      key: "status",
-      title: "Trạng thái",
-      width: 110,
-      render: (w) => (
-        <Badge className={STATUS_BADGE_CLASS[w.status]}>
-          {LUCKY_WHEEL_STATUS_LABEL[w.status] || w.status}
-        </Badge>
+      key: "active",
+      title: "Hoạt động",
+      width: 100,
+      align: "center",
+      render: (g) => (
+        <Switch
+          checked={g.status === GAME_STATUS.PUBLISHED}
+          disabled={
+            toggleMutation.isPending ||
+            g.status === GAME_STATUS.EXPIRED ||
+            g.status === GAME_STATUS.CANCELLED
+          }
+          onCheckedChange={() => toggleMutation.mutate(g)}
+        />
       ),
     },
     {
       key: "actions",
-      title: "",
-      width: 150,
-      align: "right",
-      render: (w) => (
-        <div className="flex justify-end gap-1">
-          {w.status !== LUCKY_WHEEL_STATUS.DRAFT && (
-            <Button variant="ghost" size="icon-sm" title="Người trúng" onClick={() => setSpinsWheel(w)}>
-              <Trophy className="size-4 text-amber-500" />
-            </Button>
-          )}
-          {w.status === LUCKY_WHEEL_STATUS.DRAFT && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                title="Kích hoạt"
-                onClick={() => setConfirming({ type: "activate", wheel: w })}
-              >
-                <Play className="size-4 text-emerald-600" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                title="Sửa"
-                onClick={() => {
-                  setEditing(w);
-                  setFormOpen(true);
-                }}
-              >
-                <Pencil className="size-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                title="Xóa"
-                onClick={() => setConfirming({ type: "delete", wheel: w })}
-              >
-                <Trash2 className="size-4 text-destructive" />
-              </Button>
-            </>
-          )}
-          {w.status === LUCKY_WHEEL_STATUS.ACTIVE && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              title="Kết thúc"
-              onClick={() => setConfirming({ type: "finish", wheel: w })}
-            >
-              <Square className="size-4 text-destructive" />
-            </Button>
-          )}
+      title: "Thao tác",
+      width: 140,
+      render: (g) => (
+        <div className="flex gap-1">
+          <Button variant="ghost" size="icon-sm" title="Xem / Sửa" onClick={() => navigate(`/lucky-wheel/${g._id}/edit`)}>
+            <Eye className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            title="Sửa (chỉ khi nháp)"
+            disabled={g.status !== GAME_STATUS.DRAFT}
+            onClick={() => navigate(`/lucky-wheel/${g._id}/edit`)}
+          >
+            <Pencil className="size-4" />
+          </Button>
+          <Button variant="ghost" size="icon-sm" title="Nhân bản" onClick={() => cloneMutation.mutate(g)}>
+            <Copy className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            title="Xóa (chỉ khi nháp)"
+            disabled={g.status !== GAME_STATUS.DRAFT}
+            onClick={() => setConfirming(g)}
+          >
+            <Trash2 className="size-4 text-destructive" />
+          </Button>
         </div>
       ),
     },
+    {
+      key: "createdAt",
+      title: "Ngày tạo",
+      width: 110,
+      render: (g) => (g.createdAt ? formatDate(g.createdAt) : "—"),
+    },
+    {
+      key: "updatedAt",
+      title: "Ngày chỉnh sửa",
+      width: 120,
+      render: (g) => (g.updatedAt ? formatDate(g.updatedAt) : "—"),
+    },
   ];
-
-  const confirmCfg = confirming ? CONFIRM_TEXT[confirming.type] : null;
 
   return (
     <div className="flex h-full flex-col gap-4">
       <PageHeader
-        title="Vòng quay may mắn"
-        description="Cấu hình phần thưởng theo nhóm khách hàng, tỉ lệ trúng và kho quà. Kích hoạt để khách bắt đầu quay."
+        title="Danh sách trò chơi"
+        description="Quản lý các trò chơi vòng quay may mắn trong chiến dịch."
         actions={
-          <Button
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
-          >
-            <Plus className="size-4" />
-            Tạo vòng quay
+          <Button onClick={() => navigate(ROUTE_PATH.LUCKY_WHEEL_CREATE)}>
+            <Plus className="size-4" /> Tạo mới
           </Button>
         }
       />
@@ -260,15 +296,13 @@ export default function LuckyWheel() {
             setPage(1);
           }}
         >
-          <SelectTrigger className="h-8 w-40">
+          <SelectTrigger className="h-8 w-44">
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL_STATUS}>Tất cả trạng thái</SelectItem>
-            {Object.entries(LUCKY_WHEEL_STATUS_LABEL).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
+            {Object.entries(GAME_STATUS_LABEL).map(([value, label]) => (
+              <SelectItem key={value} value={value}>{label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -282,8 +316,8 @@ export default function LuckyWheel() {
               setSearchInput(e.target.value);
               setPage(1);
             }}
-            placeholder="Tìm theo tên vòng quay..."
-            className="h-8 w-64 rounded-md border border-input bg-background pl-8 pr-3 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            placeholder="Tìm kiếm tên trò chơi..."
+            className="h-8 w-64 rounded-md border border-input bg-background pl-8 pr-3 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
       </div>
@@ -301,35 +335,24 @@ export default function LuckyWheel() {
           setPageSize(ps);
         }}
         heightOffset={220}
-        empty={isError ? "Không tải được dữ liệu." : "Chưa có vòng quay nào."}
+        empty={isError ? "Không tải được dữ liệu." : "Chưa có trò chơi nào."}
       />
 
-      <LuckyWheelFormDialog
-        open={formOpen}
-        onOpenChange={(v) => {
-          setFormOpen(v);
-          if (!v) setEditing(null);
-        }}
-        wheel={editing}
-        loading={saveMutation.isPending}
-        onSubmit={(payload) => saveMutation.mutate(payload)}
-      />
-
-      <WheelSpinsDialog
-        open={!!spinsWheel}
-        onOpenChange={(v) => !v && setSpinsWheel(null)}
-        wheel={spinsWheel}
+      <GameWinnersDialog
+        open={!!winnersGame}
+        onOpenChange={(v) => !v && setWinnersGame(null)}
+        game={winnersGame}
       />
 
       <ConfirmDialog
         open={!!confirming}
         onOpenChange={(v) => !v && setConfirming(null)}
-        title={confirmCfg?.title}
-        description={confirmCfg?.description}
-        confirmText={confirmCfg?.confirmText}
-        variant={confirmCfg?.variant}
-        loading={actionMutation.isPending}
-        onConfirm={() => actionMutation.mutate(confirming)}
+        title="Xóa trò chơi"
+        description={`Xóa trò chơi nháp "${confirming?.name}"?`}
+        confirmText="Xóa"
+        variant="destructive"
+        loading={deleteMutation.isPending}
+        onConfirm={() => deleteMutation.mutate(confirming)}
       />
     </div>
   );
