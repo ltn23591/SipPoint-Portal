@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Coins } from "lucide-react";
+import { Plus, Search, Pencil, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/common/PageHeader";
@@ -16,9 +17,9 @@ import {
 } from "@/components/ui/select";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatNumber, formatVND } from "@/helpers/format";
+import { ROUTE_PATH } from "@/constants/routePaths";
 import { CustomersApi, MembershipTierApi } from "@/apis";
 import { CustomerFormDialog } from "./CustomerFormDialog";
-import { PointsDialog } from "./PointsDialog";
 
 const ALL_TIERS = "__all__";
 
@@ -36,6 +37,7 @@ function parseList(body) {
 
 export default function Customers() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
   const search = useDebounce(searchInput, 400);
   const [tier, setTier] = useState(ALL_TIERS);
@@ -44,7 +46,6 @@ export default function Customers() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [pointsFor, setPointsFor] = useState(null);
 
   const { data: tiers = [] } = useQuery({
     queryKey: ["membership-tiers-current"],
@@ -95,22 +96,6 @@ export default function Customers() {
       qc.invalidateQueries({ queryKey: ["customers"] });
       setFormOpen(false);
       setEditing(null);
-    },
-    onError: (err) => toast.error(err.message),
-  });
-
-  const pointsMutation = useMutation({
-    mutationFn: async (payload) => {
-      const res = await CustomersApi.adjustPoints(pointsFor._id, payload);
-      if (!res?.data?.success) {
-        throw new Error(res?.data?.message || "Điều chỉnh điểm thất bại.");
-      }
-      return res.data;
-    },
-    onSuccess: (res) => {
-      toast.success(res?.message || "Đã điều chỉnh điểm.");
-      qc.invalidateQueries({ queryKey: ["customers"] });
-      setPointsFor(null);
     },
     onError: (err) => toast.error(err.message),
   });
@@ -182,11 +167,16 @@ export default function Customers() {
       align: "right",
       render: (c) => (
         <div className="flex justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            title="Xem chi tiết"
+            onClick={() => navigate(ROUTE_PATH.CUSTOMER_DETAIL.replace(":id", c._id))}
+          >
+            <Eye className="size-4" />
+          </Button>
           <Button variant="ghost" size="icon-sm" title="Sửa" onClick={() => { setEditing(c); setFormOpen(true); }}>
             <Pencil className="size-4" />
-          </Button>
-          <Button variant="ghost" size="icon-sm" title="Cộng / trừ điểm" onClick={() => setPointsFor(c)}>
-            <Coins className="size-4" />
           </Button>
         </div>
       ),
@@ -267,14 +257,6 @@ export default function Customers() {
         customer={editing}
         loading={saveMutation.isPending}
         onSubmit={(payload) => saveMutation.mutate(payload)}
-      />
-
-      <PointsDialog
-        open={!!pointsFor}
-        onOpenChange={(v) => !v && setPointsFor(null)}
-        customer={pointsFor}
-        loading={pointsMutation.isPending}
-        onSubmit={(payload) => pointsMutation.mutate(payload)}
       />
     </div>
   );

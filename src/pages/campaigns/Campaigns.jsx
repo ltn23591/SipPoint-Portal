@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2, Play, Ban } from "lucide-react";
+import { Plus, Search, Pencil, Eye, Trash2, Play, Ban } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/common/PageHeader";
@@ -17,9 +18,9 @@ import {
 } from "@/components/ui/select";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatNumber, formatDate } from "@/helpers/format";
+import { ROUTE_PATH } from "@/constants/routePaths";
 import { CAMPAIGN_STATUS, CAMPAIGN_STATUS_LABEL } from "@/constants/application";
 import { CampaignApi } from "@/apis";
-import { CampaignFormDialog } from "./CampaignFormDialog";
 
 const ALL_STATUS = "__all__";
 
@@ -32,15 +33,16 @@ const STATUS_BADGE_CLASS = {
 
 export default function Campaigns() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
   const search = useDebounce(searchInput, 400);
   const [status, setStatus] = useState(ALL_STATUS);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
   const [confirming, setConfirming] = useState(null); // { type: 'activate'|'deactivate'|'delete', campaign }
+
+  const goDetail = (id) => navigate(ROUTE_PATH.CAMPAIGN_EDIT.replace(":id", id));
 
   const params = useMemo(
     () => ({
@@ -62,23 +64,6 @@ export default function Campaigns() {
       return { list: res.data.data || [], total: res.data.pagination?.total ?? 0 };
     },
     placeholderData: keepPreviousData,
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: async (payload) => {
-      const res = editing?._id
-        ? await CampaignApi.update(editing._id, payload)
-        : await CampaignApi.create(payload);
-      if (!res?.data?.success) throw new Error(res?.data?.message || "Lưu chiến dịch thất bại.");
-      return res.data;
-    },
-    onSuccess: (res) => {
-      toast.success(res?.message || "Đã lưu chiến dịch.");
-      qc.invalidateQueries({ queryKey: ["campaigns"] });
-      setFormOpen(false);
-      setEditing(null);
-    },
-    onError: (err) => toast.error(err.message),
   });
 
   const actionMutation = useMutation({
@@ -191,6 +176,14 @@ export default function Campaigns() {
       align: "right",
       render: (c) => (
         <div className="flex justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            title={c.status === CAMPAIGN_STATUS.DRAFT ? "Sửa" : "Xem chi tiết"}
+            onClick={() => goDetail(c._id)}
+          >
+            {c.status === CAMPAIGN_STATUS.DRAFT ? <Pencil className="size-4" /> : <Eye className="size-4" />}
+          </Button>
           {c.status === CAMPAIGN_STATUS.DRAFT && (
             <>
               <Button
@@ -200,9 +193,6 @@ export default function Campaigns() {
                 onClick={() => setConfirming({ type: "activate", campaign: c })}
               >
                 <Play className="size-4 text-emerald-600" />
-              </Button>
-              <Button variant="ghost" size="icon-sm" title="Sửa" onClick={() => { setEditing(c); setFormOpen(true); }}>
-                <Pencil className="size-4" />
               </Button>
               <Button
                 variant="ghost"
@@ -237,7 +227,7 @@ export default function Campaigns() {
         title="Chiến dịch khuyến mãi"
         description="Công thức: Mã khuyến mãi = Nhóm khách hàng + Điều kiện bổ sung. Kích hoạt để phát voucher vào ví khách."
         actions={
-          <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
+          <Button onClick={() => navigate(ROUTE_PATH.CAMPAIGN_CREATE)}>
             <Plus className="size-4" />
             Tạo chiến dịch
           </Button>
@@ -294,17 +284,6 @@ export default function Campaigns() {
         }}
         heightOffset={220}
         empty={isError ? "Không tải được dữ liệu." : "Chưa có chiến dịch nào."}
-      />
-
-      <CampaignFormDialog
-        open={formOpen}
-        onOpenChange={(v) => {
-          setFormOpen(v);
-          if (!v) setEditing(null);
-        }}
-        campaign={editing}
-        loading={saveMutation.isPending}
-        onSubmit={(payload) => saveMutation.mutate(payload)}
       />
 
       <ConfirmDialog

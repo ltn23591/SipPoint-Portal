@@ -25,9 +25,11 @@ import LuckyWheel from "@/pages/luckyWheel/LuckyWheel";
 import GameForm from "@/pages/luckyWheel/GameForm";
 import Tables from "@/pages/tables/Tables";
 import Customers from "@/pages/customers/Customers";
+import CustomerDetail from "@/pages/customers/CustomerDetail";
 import Segments from "@/pages/segments/Segments";
 import SegmentEditor from "@/pages/segments/SegmentEditor";
 import Campaigns from "@/pages/campaigns/Campaigns";
+import CampaignForm from "@/pages/campaigns/CampaignForm";
 import Loyalty from "@/pages/loyalty/Loyalty";
 import Staff from "@/pages/staff/Staff";
 import Roles from "@/pages/roles/Roles";
@@ -73,10 +75,13 @@ export const router = createBrowserRouter([
       { path: ROUTE_PATH.TABLES, element: <Tables /> },
 
       { path: ROUTE_PATH.CUSTOMERS, element: <Customers /> },
+      { path: ROUTE_PATH.CUSTOMER_DETAIL, element: <CustomerDetail /> },
 
       { path: ROUTE_PATH.SEGMENTS, element: <Segments /> },
       { path: ROUTE_PATH.SEGMENT_DETAIL, element: <SegmentEditor /> },
       { path: ROUTE_PATH.CAMPAIGNS, element: <Campaigns /> },
+      { path: ROUTE_PATH.CAMPAIGN_CREATE, element: <CampaignForm /> },
+      { path: ROUTE_PATH.CAMPAIGN_EDIT, element: <CampaignForm /> },
 
       { path: ROUTE_PATH.LOYALTY, element: <Loyalty /> },
 

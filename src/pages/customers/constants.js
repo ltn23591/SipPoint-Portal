@@ -1,17 +1,20 @@
-export const POINT_TRANSACTION_TYPE = {
-  ORDER: "ORDER",
-  REWARD: "REWARD",
-  REDEEM: "REDEEM",
-  ADJUSTMENT: "ADJUSTMENT",
+export const POINT_DIRECTION = {
+  EARN: "EARN",
+  USE: "USE",
 };
 
+export const POINT_DIRECTION_LABEL = {
+  [POINT_DIRECTION.EARN]: "Tích điểm",
+  [POINT_DIRECTION.USE]: "Sử dụng điểm",
+};
+
+// Khớp enum POINT_TRANSACTION_TYPE ở backend (src/enums/index.js).
 export const POINT_TRANSACTION_TYPE_LABEL = {
-  [POINT_TRANSACTION_TYPE.ORDER]: "Đơn hàng",
-  [POINT_TRANSACTION_TYPE.REWARD]: "Thưởng",
-  [POINT_TRANSACTION_TYPE.REDEEM]: "Đổi điểm",
-  [POINT_TRANSACTION_TYPE.ADJUSTMENT]: "Điều chỉnh thủ công",
+  ORDER: "Hóa đơn",
+  REWARD: "Đổi quà",
+  BIRTHDAY_GIFT: "Quà sinh nhật",
+  ADJUSTMENT: "Điều chỉnh thủ công",
+  REFUND: "Hoàn tiền",
+  LUCKY_WHEEL: "Vòng quay may mắn",
+  LUCKY_GAME: "Trò chơi may mắn",
 };
-
-export const POINT_TRANSACTION_TYPE_OPTIONS = Object.entries(
-  POINT_TRANSACTION_TYPE_LABEL
-).map(([value, label]) => ({ value, label }));
