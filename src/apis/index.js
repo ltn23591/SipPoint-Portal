@@ -329,10 +329,15 @@ export const CustomersApi = {
     const endpoint = `/api/v1/customers/${id}`;
     return apiCall(API_METHOD.PUT, endpoint, payload);
   },
-  // Cộng / trừ điểm: pointsChange âm = trừ, dương = cộng.
-  adjustPoints: (id, payload) => {
-    const endpoint = `/api/v1/customers/${id}/points`;
-    return apiCall(API_METHOD.POST, endpoint, payload);
+  // Admin: toàn bộ ví voucher của khách hàng (lọc campaignId ở FE để lấy timeline chiến dịch).
+  getVouchers: (id) => {
+    const endpoint = `/api/v1/customers/${id}/vouchers`;
+    return apiCall(API_METHOD.GET, endpoint);
+  },
+  // Admin: lịch sử điểm đầy đủ (phân trang) của khách hàng.
+  getPointHistory: (id, params, signal) => {
+    const endpoint = `/api/v1/customers/${id}/point-history`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
   },
 };
 

@@ -24,7 +24,6 @@ import {
 const EMPTY = {
   name: "",
   minPoints: 0,
-  discountPercentage: 0,
   status: "active",
   description: "",
 };
@@ -39,7 +38,6 @@ export function TierFormDialog({ open, onOpenChange, tier, onSubmit, loading }) 
       setForm({
         name: tier?.name ?? "",
         minPoints: tier?.minPoints ?? 0,
-        discountPercentage: tier?.discountPercentage ?? 0,
         status: tier?.status ?? "active",
         description: tier?.description ?? "",
       });
@@ -59,14 +57,6 @@ export function TierFormDialog({ open, onOpenChange, tier, onSubmit, loading }) 
     if (form.minPoints === "" || isNaN(form.minPoints) || Number(form.minPoints) < 0) {
       next.minPoints = "Điểm tối thiểu không hợp lệ.";
     }
-    if (
-      form.discountPercentage === "" ||
-      isNaN(form.discountPercentage) ||
-      Number(form.discountPercentage) < 0 ||
-      Number(form.discountPercentage) > 100
-    ) {
-      next.discountPercentage = "Phần trăm giảm giá từ 0 - 100%.";
-    }
 
     if (Object.keys(next).length) {
       setErrors(next);
@@ -76,7 +66,6 @@ export function TierFormDialog({ open, onOpenChange, tier, onSubmit, loading }) 
     onSubmit({
       name: form.name.trim(),
       minPoints: Number(form.minPoints),
-      discountPercentage: Number(form.discountPercentage),
       status: form.status,
       description: form.description.trim(),
     });
@@ -109,39 +98,21 @@ export function TierFormDialog({ open, onOpenChange, tier, onSubmit, loading }) 
             {errors.name ? <p className="text-sm text-destructive">{errors.name}</p> : null}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="tier-minPoints">
-                Điểm tối thiểu <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="tier-minPoints"
-                type="number"
-                min={0}
-                value={form.minPoints}
-                onChange={(e) => setField("minPoints", e.target.value)}
-                placeholder="VD: 500"
-              />
-              {errors.minPoints ? (
-                <p className="text-sm text-destructive">{errors.minPoints}</p>
-              ) : null}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tier-discount">Ưu đãi giảm giá (%)</Label>
-              <Input
-                id="tier-discount"
-                type="number"
-                min={0}
-                max={100}
-                value={form.discountPercentage}
-                onChange={(e) => setField("discountPercentage", e.target.value)}
-                placeholder="VD: 5"
-              />
-              {errors.discountPercentage ? (
-                <p className="text-sm text-destructive">{errors.discountPercentage}</p>
-              ) : null}
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="tier-minPoints">
+              Điểm tối thiểu <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="tier-minPoints"
+              type="number"
+              min={0}
+              value={form.minPoints}
+              onChange={(e) => setField("minPoints", e.target.value)}
+              placeholder="VD: 500"
+            />
+            {errors.minPoints ? (
+              <p className="text-sm text-destructive">{errors.minPoints}</p>
+            ) : null}
           </div>
 
           <div className="space-y-2">
