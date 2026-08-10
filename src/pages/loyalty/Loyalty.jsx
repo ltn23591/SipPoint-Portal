@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Gift, Coins, Crown, Plus, Pencil } from "lucide-react";
+import { Coins, Crown, Plus, Pencil } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatNumber } from "@/helpers/format";
-import { MembershipTierApi, CampaignApi } from "@/apis";
+import { MembershipTierApi } from "@/apis";
 import { TierFormDialog } from "./TierFormDialog";
 
 export default function Loyalty() {
@@ -21,14 +21,6 @@ export default function Loyalty() {
     queryFn: async () => {
       const res = await MembershipTierApi.getAllCurrent();
       return res?.data?.data || res?.data || [];
-    },
-  });
-
-  const { data: campaigns = [], isLoading: isCampaignsLoading } = useQuery({
-    queryKey: ["campaigns-list"],
-    queryFn: async () => {
-      const res = await CampaignApi.search({ pageSize: 10 });
-      return res?.data?.data || [];
     },
   });
 
@@ -63,8 +55,8 @@ export default function Loyalty() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Loyalty & Events"
-        description="Chương trình tích điểm và quản lý các hạng thành viên hệ thống."
+        title="Hạng thành viên"
+        description="Quy tắc tích điểm và quản lý các hạng thành viên hệ thống."
       />
 
       {/* Quy tắc tích điểm */}
@@ -126,11 +118,6 @@ export default function Loyalty() {
                   <p className="mt-2 text-sm text-muted-foreground">
                     Điều kiện: Từ <strong className="text-foreground">{formatNumber(t.minPoints)}</strong> điểm
                   </p>
-                  {t.discountPercentage > 0 && (
-                    <p className="mt-1 text-xs font-semibold text-emerald-600">
-                      Ưu đãi: Giảm {t.discountPercentage}% hóa đơn
-                    </p>
-                  )}
                   {t.description && (
                     <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
                       {t.description}
@@ -138,35 +125,6 @@ export default function Loyalty() {
                   )}
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Sự kiện */}
-      <div>
-        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Gift className="size-4 text-primary" />
-          Chiến dịch / Sự kiện Marketing
-        </h2>
-        {isCampaignsLoading ? (
-          <p className="text-sm text-muted-foreground">Đang tải danh sách chiến dịch...</p>
-        ) : campaigns.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Chưa có chiến dịch nào.</p>
-        ) : (
-          <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-            {campaigns.map((e) => (
-              <div key={e._id} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div>
-                  <p className="font-medium text-foreground">{e.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Loại: {e.type} · {new Date(e.startDate).toLocaleDateString("vi-VN")} - {new Date(e.endDate).toLocaleDateString("vi-VN")}
-                  </p>
-                </div>
-                <Badge variant={e.status === "ACTIVE" ? "success" : "secondary"}>
-                  {e.status === "ACTIVE" ? "Đang chạy" : "Đã kết thúc"}
-                </Badge>
-              </div>
             ))}
           </div>
         )}

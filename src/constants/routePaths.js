@@ -22,10 +22,13 @@ export const ROUTE_PATH = {
   SHIFTS: "/shifts",
 
   CUSTOMERS: "/customers",
+  CUSTOMER_DETAIL: "/customers/:id",
 
   SEGMENTS: "/segments",
   SEGMENT_DETAIL: "/segments/:id",
   CAMPAIGNS: "/campaigns",
+  CAMPAIGN_CREATE: "/campaigns/create",
+  CAMPAIGN_EDIT: "/campaigns/:id/edit",
 
   LOYALTY: "/loyalty",
 
