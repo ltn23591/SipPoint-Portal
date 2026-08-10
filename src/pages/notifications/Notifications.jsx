@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Eye, Plus, Search, Trash2 } from "lucide-react";
+import { Eye, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,8 @@ import { TEXT } from "./constants";
 const RECIPIENT_LABEL = {
   all: "Tất cả",
   customer: "Khách hàng",
+  segment: "Nhóm khách hàng",
+  tier: "Hạng thành viên",
   staff: "Nhân viên",
 };
 
@@ -119,7 +121,7 @@ export default function Notifications() {
     {
       key: "actions",
       title: TEXT.colActions,
-      width: 100,
+      width: 120,
       align: "center",
       render: (row) => (
         <TooltipProvider delayDuration={300}>
@@ -140,6 +142,24 @@ export default function Notifications() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top">{TEXT.viewDetail}</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="size-8 text-muted-foreground hover:text-foreground"
+                  onClick={() =>
+                    navigate(ROUTE_PATH.NOTIFICATIONS_DETAIL.replace(":id", row._id), {
+                      state: { mode: "edit" },
+                    })
+                  }
+                >
+                  <Pencil className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Chỉnh sửa thông báo</TooltipContent>
             </Tooltip>
 
             <Tooltip>
