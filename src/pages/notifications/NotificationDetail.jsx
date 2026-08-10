@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ROUTE_PATH } from "@/constants/routePaths";
-import { NotificationApi } from "@/apis";
+import { NotificationApi, CustomerSegmentApi } from "@/apis";
 import { TEXT } from "./constants";
 
 function Field({ label, children }) {
@@ -31,6 +31,7 @@ const EMPTY = {
   title: "",
   content: "",
   recipientType: "all",
+  segmentId: "",
   type: "system",
   status: "active",
 };
@@ -41,9 +42,20 @@ export default function NotificationDetail() {
   const location = useLocation();
   const qc = useQueryClient();
   const isCreate = id === "new";
-  const readOnly = !isCreate && (location.state?.mode ?? "view") === "view";
+  const [pMode, setPMode] = useState(location.state?.mode ?? (isCreate ? "create" : "view"));
+  const readOnly = pMode === "view";
 
   const [form, setForm] = useState(EMPTY);
+
+  // Lấy danh sách Nhóm khách hàng (Segments)
+  const { data: segmentsData = [] } = useQuery({
+    queryKey: ["customerSegmentsList"],
+    queryFn: async () => {
+      const res = await CustomerSegmentApi.getAll();
+      const list = res?.data?.data || res?.data || [];
+      return Array.isArray(list) ? list : (list.segments || []);
+    },
+  });
 
   const { data: detailData } = useQuery({
     queryKey: ["notification", id],
@@ -60,6 +72,7 @@ export default function NotificationDetail() {
         title: detailData.title || "",
         content: detailData.content || detailData.body || "",
         recipientType: detailData.recipientType || "all",
+        segmentId: detailData.segmentId?._id || detailData.segmentId || "",
         type: detailData.type || "system",
         status: detailData.status || "active",
       });
@@ -77,8 +90,25 @@ export default function NotificationDetail() {
       return res.data;
     },
     onSuccess: () => {
-      toast.success("Tạo thông báo mới thành công");
+      toast.success("Gửi thông báo thành công");
       qc.invalidateQueries({ queryKey: ["notifications"] });
+      navigate(ROUTE_PATH.NOTIFICATIONS);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (payload) => {
+      const res = await NotificationApi.update({ id, ...payload });
+      if (!res?.data?.success) {
+        throw new Error(res?.data?.message || "Cập nhật thông báo thất bại");
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Cập nhật thông báo thành công");
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: ["notification", id] });
       navigate(ROUTE_PATH.NOTIFICATIONS);
     },
     onError: (err) => toast.error(err.message),
@@ -86,13 +116,22 @@ export default function NotificationDetail() {
 
   const handleSend = () => {
     if (!form.title.trim() || !form.content.trim()) return;
-    createMutation.mutate({
+    const payload = {
       title: form.title.trim(),
       content: form.content.trim(),
       recipientType: form.recipientType,
       type: form.type,
       status: form.status,
-    });
+    };
+    if (form.recipientType === "segment" && form.segmentId) {
+      payload.segmentId = form.segmentId;
+    }
+
+    if (isCreate) {
+      createMutation.mutate(payload);
+    } else {
+      updateMutation.mutate(payload);
+    }
   };
 
   return (
@@ -122,7 +161,8 @@ export default function NotificationDetail() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả khách hàng & nhân viên</SelectItem>
-                <SelectItem value="customer">Chỉ Khách hàng</SelectItem>
+                <SelectItem value="customer">Tất cả Khách hàng</SelectItem>
+                <SelectItem value="segment">Theo Nhóm khách hàng (Segment)</SelectItem>
                 <SelectItem value="staff">Chỉ Nhân viên</SelectItem>
               </SelectContent>
             </Select>
@@ -135,29 +175,63 @@ export default function NotificationDetail() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="system">Hệ thống</SelectItem>
-                <SelectItem value="promotion">Khuyến mãi</SelectItem>
+                <SelectItem value="promotion">Khuyến mãi / Marketing</SelectItem>
                 <SelectItem value="order">Đơn hàng</SelectItem>
               </SelectContent>
             </Select>
           </Field>
         </div>
 
+        {form.recipientType === "segment" && (
+          <Field label="Chọn Nhóm khách hàng mục tiêu">
+            <Select value={form.segmentId} onValueChange={(v) => set("segmentId", v)} disabled={readOnly}>
+              <SelectTrigger>
+                <SelectValue placeholder="Chọn nhóm khách hàng..." />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.isArray(segmentsData) && segmentsData.map((s) => (
+                  <SelectItem key={s._id} value={s._id}>
+                    {s.name} ({s.memberCount ?? s.memberIds?.length ?? 0} thành viên)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+        )}
+
         <Field label="Nội dung thông báo">
           <Textarea rows={4} value={form.content ?? ""} disabled={readOnly} onChange={(e) => set("content", e.target.value)} placeholder="Nhập nội dung chi tiết..." />
         </Field>
       </div>
 
-      {!readOnly && (
+      {readOnly ? (
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => navigate(ROUTE_PATH.NOTIFICATIONS)}>
+            Quay lại
+          </Button>
+          <Button onClick={() => setPMode("edit")} className="gap-1.5">
+            <Pencil className="size-4" />
+            Chỉnh sửa thông báo
+          </Button>
+        </div>
+      ) : (
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => (isCreate ? navigate(ROUTE_PATH.NOTIFICATIONS) : setPMode("view"))}>
             {TEXT.cancel}
           </Button>
-          <Button onClick={handleSend} disabled={createMutation.isPending || !form.title.trim() || !form.content.trim()} className="gap-1.5">
+          <Button
+            onClick={handleSend}
+            disabled={createMutation.isPending || updateMutation.isPending || !form.title.trim() || !form.content.trim()}
+            className="gap-1.5"
+          >
             <Send className="size-4" />
-            {createMutation.isPending ? "Đang gửi..." : TEXT.save}
+            {createMutation.isPending || updateMutation.isPending ? "Đang lưu..." : isCreate ? "Gửi thông báo" : "Lưu thay đổi"}
           </Button>
         </div>
       )}
     </div>
   );
 }
+
+
+
