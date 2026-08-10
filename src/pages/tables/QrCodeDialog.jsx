@@ -51,7 +51,7 @@ export function QrCodeDialog({ open, onOpenChange, table, onGenerate, loading })
         <DialogFooter className="sm:justify-between">
           {hasQr && isImageSrc(qrCode) ? (
             <Button variant="outline" asChild>
-              <a href={qrCode} download={`qr-${table?.name || "table"}.png`}>
+              <a href={qrCode} download={`qr-${table?.name || "table"}.png`} target="_blank" rel="noopener noreferrer">
                 <Download className="size-4" />
                 Tải xuống
               </a>
@@ -59,14 +59,14 @@ export function QrCodeDialog({ open, onOpenChange, table, onGenerate, loading })
           ) : (
             <span />
           )}
-          <Button onClick={onGenerate} disabled={loading}>
-            {loading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <QrCode className="size-4" />
-            )}
-            {hasQr ? "Tạo lại mã QR" : "Sinh mã QR"}
-          </Button>
+            <Button onClick={onGenerate} disabled={loading}>
+              {loading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <QrCode className="size-4" />
+              )}
+              {hasQr ? "Tạo lại mã QR" : "Sinh mã QR"}
+            </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
