@@ -234,7 +234,7 @@ export default function CustomerDetail() {
                 loading={isVouchersLoading}
                 total={timeline.length}
                 showSizeChanger={false}
-                heightOffset={320}
+                heightOffset={16}
                 empty="Khách hàng chưa được phát voucher từ chiến dịch nào."
               />
             </TabsContent>
@@ -252,7 +252,7 @@ export default function CustomerDetail() {
                   setPage(p);
                   setPageSize(ps);
                 }}
-                heightOffset={320}
+                heightOffset={16}
                 empty="Chưa có giao dịch điểm nào."
               />
             </TabsContent>

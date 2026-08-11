@@ -140,7 +140,7 @@ export default function Roles() {
         rowKey="_id"
         loading={isLoading}
         total={0}
-        heightOffset={200}
+        heightOffset={16}
         empty={isError ? "Không tải được dữ liệu." : "Chưa có vai trò nào."}
       />
 
