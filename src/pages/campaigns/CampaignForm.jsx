@@ -276,7 +276,7 @@ export default function CampaignForm() {
               {vouchers.map((v) => (
                 <SelectItem key={v._id} value={v._id}>
                   {v.code} — {v.title} (kho còn{" "}
-                  {formatNumber(Math.max(0, (v.usageLimit ?? 0) - (v.issuedCount ?? 0)))})
+                  {formatNumber(Math.max(0, (v.usageLimit ?? 0) - (v.issuedCount ?? 0) - (v.usedCount ?? 0)))})
                 </SelectItem>
               ))}
             </SelectContent>

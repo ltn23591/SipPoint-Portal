@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -21,7 +22,7 @@ import { TEXT } from "./constants";
 function Field({ label, children }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-muted-foreground">{label}</label>
+      <Label>{label}</Label>
       {children}
     </div>
   );
@@ -134,21 +135,31 @@ export default function NotificationDetail() {
     }
   };
 
+  const title = isCreate ? TEXT.createTitle : TEXT.detailTitle;
+
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon-sm" onClick={() => navigate(ROUTE_PATH.NOTIFICATIONS)}>
-          <ArrowLeft className="size-4" />
-        </Button>
+    <div className="flex h-full flex-col gap-4 overflow-y-auto pb-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-secondary">
-            {isCreate ? TEXT.createTitle : TEXT.detailTitle}
-          </h1>
-          {!isCreate && detailData && <p className="text-sm text-muted-foreground">{detailData.title}</p>}
+          <p className="text-xs text-muted-foreground">
+            {TEXT.pageTitle} / {title}
+          </p>
+          <h1 className="text-2xl font-semibold">{title}</h1>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate(ROUTE_PATH.NOTIFICATIONS)}>
+            <ArrowLeft className="size-4" /> {TEXT.back}
+          </Button>
+          {readOnly && (
+            <Button onClick={() => setPMode("edit")}>
+              <Pencil className="size-4" /> Chỉnh sửa
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="space-y-5 rounded-xl border bg-card p-6 shadow-sm">
+      <div className="space-y-4 rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold">Nội dung thông báo</h2>
         <Field label="Tiêu đề thông báo">
           <Input value={form.title ?? ""} disabled={readOnly} onChange={(e) => set("title", e.target.value)} placeholder="Nhập tiêu đề..." />
         </Field>
@@ -204,17 +215,7 @@ export default function NotificationDetail() {
         </Field>
       </div>
 
-      {readOnly ? (
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => navigate(ROUTE_PATH.NOTIFICATIONS)}>
-            Quay lại
-          </Button>
-          <Button onClick={() => setPMode("edit")} className="gap-1.5">
-            <Pencil className="size-4" />
-            Chỉnh sửa thông báo
-          </Button>
-        </div>
-      ) : (
+      {!readOnly && (
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => (isCreate ? navigate(ROUTE_PATH.NOTIFICATIONS) : setPMode("view"))}>
             {TEXT.cancel}

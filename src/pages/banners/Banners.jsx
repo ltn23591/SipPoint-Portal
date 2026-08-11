@@ -233,7 +233,7 @@ export default function Banners() {
 
       {/* Create / Edit Dialog */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingBanner ? "Chỉnh sửa Banner" : "Thêm Banner mới"}</DialogTitle>
           </DialogHeader>

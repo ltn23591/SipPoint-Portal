@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { ROUTE_PATH } from "@/constants/routePaths";
 import { GAME_REWARD_TYPE, GAME_REWARD_TYPE_LABEL, GAME_STATUS, GAME_STATUS_LABEL } from "@/constants/application";
+import { formatNumber } from "@/helpers/format";
 import { GameApi, VoucherApi, CustomerSegmentApi, UploadApi } from "@/apis";
 import { SegmentPickerDialog } from "./SegmentPickerDialog";
 
@@ -186,12 +187,14 @@ export default function GameForm() {
   const setDist = (key, patch) =>
     setDistributions((prev) => prev.map((d) => (d.key === key ? { ...d, ...patch } : d)));
 
-  // Chọn ô mặc định: chỉ 1 ô, ép MESSAGE + allowManyTimes
+  // Chọn ô mặc định: chỉ 1 ô, ép cho phép trúng nhiều lần (là ô dự phòng khi các ô
+  // khác hết kho/trượt xác suất, nên phải luôn trúng được). Loại phần thưởng (quà
+  // tặng/xu/lời chúc) của ô mặc định để admin tự chọn, không ép cố định MESSAGE.
   const chooseDefault = (key) =>
     setRewards((prev) =>
       prev.map((r) =>
         r.key === key
-          ? { ...r, isDefault: true, type: GAME_REWARD_TYPE.MESSAGE, allowManyTimes: true }
+          ? { ...r, isDefault: true, allowManyTimes: true }
           : { ...r, isDefault: false }
       )
     );
@@ -285,7 +288,7 @@ export default function GameForm() {
     }
     if (rewards.length === 0) return "Cần ít nhất một ô phần thưởng.";
     const defaults = rewards.filter((r) => r.isDefault);
-    if (defaults.length !== 1) return "Phải có đúng một ô mặc định (lời chúc).";
+    if (defaults.length !== 1) return "Phải có đúng một ô mặc định.";
     for (const r of rewards) {
       if (!r.displayName.trim()) return "Mỗi ô phải có tên hiển thị.";
       if (r.type === GAME_REWARD_TYPE.VOUCHER && !r.voucherId) return `Ô "${r.displayName}" chưa chọn quà tặng.`;
@@ -549,7 +552,7 @@ export default function GameForm() {
                     type="radio"
                     name={`type-${r.key}`}
                     checked={r.type === value}
-                    disabled={lockConfig || r.isDefault}
+                    disabled={lockConfig}
                     onChange={() => setReward(r.key, { type: value })}
                   />
                   {label}
@@ -566,10 +569,30 @@ export default function GameForm() {
                       <SelectTrigger><SelectValue placeholder="Chọn voucher" /></SelectTrigger>
                       <SelectContent>
                         {vouchers.map((v) => (
-                          <SelectItem key={v._id} value={v._id}>{v.code} — {v.title}</SelectItem>
+                          <SelectItem key={v._id} value={v._id}>
+                            {v.code} — {v.title} (kho còn{" "}
+                            {formatNumber(Math.max(0, (v.usageLimit ?? 0) - (v.issuedCount ?? 0) - (v.usedCount ?? 0)))})
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    {(() => {
+                      const selectedVoucher = vouchers.find((v) => v._id === r.voucherId);
+                      if (!selectedVoucher) return null;
+                      const voucherStock = Math.max(
+                        0,
+                        (selectedVoucher.usageLimit ?? 0) - (selectedVoucher.issuedCount ?? 0) - (selectedVoucher.usedCount ?? 0)
+                      );
+                      if (Number(r.totalReward) > voucherStock) {
+                        return (
+                          <p className="text-xs text-amber-600">
+                            Tổng phần thưởng ({formatNumber(Number(r.totalReward) || 0)}) đang vượt quá kho voucher còn lại
+                            ({formatNumber(voucherStock)}). Voucher có thể hết trước khi ô hết kho.
+                          </p>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                   <div className="space-y-2">
                     <Label>Số lượng tặng</Label>

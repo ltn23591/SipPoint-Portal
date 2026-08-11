@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -58,10 +59,10 @@ const EMPTY = {
 function Field({ label, required, children }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-muted-foreground">
+      <Label>
         {label}
         {required ? <span className="text-destructive"> *</span> : null}
-      </label>
+      </Label>
       {children}
     </div>
   );
@@ -136,6 +137,16 @@ export default function MenuDetail() {
     },
   });
 
+  // Khả năng phục vụ hiện tại theo tồn nguyên liệu - chỉ có ý nghĩa với món đã có công thức
+  const { data: availability } = useQuery({
+    queryKey: ["product-availability", id],
+    enabled: !isCreate && recipeItems.length > 0,
+    queryFn: async () => {
+      const res = await RecipeApi.availability([id]);
+      return res?.data?.success ? (res.data.data || [])[0] : null;
+    },
+  });
+
   useEffect(() => {
     if (isCreate) {
       setRecipeItems([]);
@@ -197,6 +208,9 @@ export default function MenuDetail() {
         .filter(s => s.active)
         .map(s => ({ variantType: "size", name: s.name, priceAdjustment: Number(s.priceAdjustment) || 0 }));
 
+      // Món có công thức: tồn kho do hệ thống tự tính theo nguyên liệu (xem Kho & Nguyên
+      // liệu), không gửi field stock để tránh ghi đè giá trị đang được hệ thống quản lý.
+      const hasRecipe = recipeItems.length > 0;
       const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
@@ -205,7 +219,7 @@ export default function MenuDetail() {
         category: form.category,
         isActive: form.isActive,
         variants: variants,
-        ...(form.stock !== "" ? { stock: Number(form.stock) } : {}),
+        ...(!hasRecipe && form.stock !== "" ? { stock: Number(form.stock) } : {}),
       };
       const res = isCreate
         ? await ProductsApi.create(payload)
@@ -310,230 +324,248 @@ export default function MenuDetail() {
     : TEXT.editTitle;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      {/* Page header */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => navigate(ROUTE_PATH.MENU)}
-          >
-            <ArrowLeft className="size-4" />
-          </Button>
-          <div>
-            <h1 className="text-xl font-bold text-secondary">{title}</h1>
-            {!isCreate && (
-              <p className="text-sm text-muted-foreground">{product.name}</p>
-            )}
-          </div>
+    <div className="flex h-full flex-col gap-4 overflow-y-auto pb-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs text-muted-foreground">
+            {TEXT.pageTitle} / {title}
+          </p>
+          <h1 className="text-2xl font-semibold">{title}</h1>
         </div>
-        {readOnly && (
-          <Button variant="outline" size="sm" onClick={() => setMode("edit")}>
-            <Pencil className="mr-1.5 size-3.5" />
-            {TEXT.edit}
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate(ROUTE_PATH.MENU)}>
+            <ArrowLeft className="size-4" /> {TEXT.back}
           </Button>
-        )}
-      </div>
-
-      {/* Form card */}
-      <div className="space-y-5 rounded-xl border bg-card p-6 shadow-sm">
-        {/* Image upload / preview */}
-        <div className="space-y-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              handleUpload(e.target.files?.[0]);
-              e.target.value = "";
-            }}
-          />
-          <button
-            type="button"
-            disabled={readOnly || uploading}
-            onClick={() => fileInputRef.current?.click()}
-            className="group relative flex h-40 w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-muted/30 text-sm text-muted-foreground transition-colors enabled:hover:border-primary/60 enabled:hover:bg-muted/50 disabled:cursor-default"
-          >
-            {typeof form.image === "string" && form.image.startsWith("http") ? (
-              <img
-                src={form.image}
-                alt={form.name}
-                className="h-full w-full object-contain"
-              />
-            ) : (
-              <span className="flex flex-col items-center gap-1.5">
-                <ImagePlus className="size-6" />
-                {readOnly ? "Ảnh món (chưa có)" : "Bấm để chọn ảnh"}
-              </span>
-            )}
-            {uploading && (
-              <span className="absolute inset-0 flex items-center justify-center gap-2 bg-background/70 text-foreground">
-                <Loader2 className="size-4 animate-spin" />
-                Đang tải ảnh...
-              </span>
-            )}
-          </button>
-          {!readOnly && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="w-full"
-              disabled={uploading}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="mr-1.5 size-3.5" />
-              {form.image ? "Đổi ảnh khác" : "Tải ảnh lên"}
+          {readOnly && (
+            <Button onClick={() => setMode("edit")}>
+              <Pencil className="size-4" /> {TEXT.edit}
             </Button>
           )}
         </div>
+      </div>
 
-        <Field label={TEXT.fieldName} required>
-          <input
-            type="text"
-            value={form.name}
-            disabled={readOnly}
-            onChange={(e) => set("name", e.target.value)}
-            className={inputCls}
-          />
-        </Field>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Field label={TEXT.fieldCategory} required>
-            <Select
-              value={form.category || ""}
-              onValueChange={(v) => set("category", v)}
-              disabled={readOnly}
-            >
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Chọn danh mục" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c._id} value={c._id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-
-          <Field label={TEXT.fieldPrice} required>
-            <input
-              type="number"
-              value={form.price}
-              disabled={readOnly}
-              onChange={(e) => set("price", e.target.value)}
-              className={inputCls}
-            />
-          </Field>
+      {error ? (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
         </div>
+      ) : null}
 
-        <div className="grid grid-cols-2 gap-4">
-          <Field label={TEXT.fieldStock}>
+      {/* Thông tin chung + Hình ảnh */}
+      <div className="grid gap-6 rounded-xl border border-border bg-card p-6 lg:grid-cols-2">
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Thông tin chung</h2>
+          <Field label={TEXT.fieldName} required>
             <input
-              type="number"
-              value={form.stock}
+              type="text"
+              value={form.name}
               disabled={readOnly}
-              onChange={(e) => set("stock", e.target.value)}
+              onChange={(e) => set("name", e.target.value)}
               className={inputCls}
             />
           </Field>
 
-          <Field label={TEXT.fieldStatus}>
-            {readOnly ? (
-              <div className="pt-1">
-                {form.isActive === "active" ? (
-                  <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                    Đang bán
-                  </Badge>
-                ) : (
-                  <Badge variant="secondary">Tạm ngưng</Badge>
-                )}
-              </div>
-            ) : (
+          <div className="grid grid-cols-2 gap-4">
+            <Field label={TEXT.fieldCategory} required>
               <Select
-                value={form.isActive}
-                onValueChange={(v) => set("isActive", v)}
+                value={form.category || ""}
+                onValueChange={(v) => set("category", v)}
+                disabled={readOnly}
               >
                 <SelectTrigger className="h-9 text-sm">
-                  <SelectValue />
+                  <SelectValue placeholder="Chọn danh mục" />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUS_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
+                  {categories.map((c) => (
+                    <SelectItem key={c._id} value={c._id}>
+                      {c.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            )}
+            </Field>
+
+            <Field label={TEXT.fieldPrice} required>
+              <input
+                type="number"
+                value={form.price}
+                disabled={readOnly}
+                onChange={(e) => set("price", e.target.value)}
+                className={inputCls}
+              />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label={TEXT.fieldStock}>
+              {recipeItems.length > 0 ? (
+                <div className="flex h-9 items-center rounded-md border border-dashed border-border bg-muted/30 px-3 text-sm text-muted-foreground">
+                  {isCreate
+                    ? "Tự động tính theo nguyên liệu sau khi lưu"
+                    : availability
+                    ? `Còn làm được ${availability.makeable ?? 0} phần (theo nguyên liệu)`
+                    : "Tự động tính theo nguyên liệu"}
+                </div>
+              ) : (
+                <input
+                  type="number"
+                  value={form.stock}
+                  disabled={readOnly}
+                  onChange={(e) => set("stock", e.target.value)}
+                  className={inputCls}
+                />
+              )}
+            </Field>
+
+            <Field label={TEXT.fieldStatus}>
+              {readOnly ? (
+                <div className="pt-1">
+                  {form.isActive === "active" ? (
+                    <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                      Đang bán
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary">Tạm ngưng</Badge>
+                  )}
+                </div>
+              ) : (
+                <Select
+                  value={form.isActive}
+                  onValueChange={(v) => set("isActive", v)}
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </Field>
+          </div>
+
+          <Field label={TEXT.fieldDescription} required>
+            <textarea
+              value={form.description}
+              disabled={readOnly}
+              onChange={(e) => set("description", e.target.value)}
+              rows={3}
+              className="flex w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            />
           </Field>
         </div>
 
-        <Field label="Các tuỳ chọn Size">
-          <div className="flex flex-wrap gap-4">
-            {form.sizes?.map((size, idx) => (
-              <div key={size.name} className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant={size.active ? "default" : "outline"}
-                  size="sm"
-                  disabled={readOnly}
-                  className={`h-8 rounded-full px-4 ${size.active ? 'bg-primary' : ''}`}
-                  onClick={() => {
-                    const newSizes = [...form.sizes];
-                    newSizes[idx].active = !newSizes[idx].active;
-                    set("sizes", newSizes);
-                  }}
-                >
-                  {size.name}
-                </Button>
-                {size.active && (
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-muted-foreground">+</span>
-                    <input
-                      type="number"
-                      placeholder="Giá cộng thêm"
-                      disabled={readOnly}
-                      value={size.priceAdjustment}
-                      onChange={(e) => {
-                        const newSizes = [...form.sizes];
-                        newSizes[idx].priceAdjustment = e.target.value;
-                        set("sizes", newSizes);
-                      }}
-                      className="h-8 w-24 rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    />
-                    <span className="text-xs text-muted-foreground">đ</span>
-                  </div>
-                )}
-              </div>
-            ))}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Hình ảnh</h2>
+          <div className="space-y-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                handleUpload(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              disabled={readOnly || uploading}
+              onClick={() => fileInputRef.current?.click()}
+              className="group relative flex h-40 w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-muted/30 text-sm text-muted-foreground transition-colors enabled:hover:border-primary/60 enabled:hover:bg-muted/50 disabled:cursor-default"
+            >
+              {typeof form.image === "string" && form.image.startsWith("http") ? (
+                <img
+                  src={form.image}
+                  alt={form.name}
+                  className="h-full w-full object-contain"
+                />
+              ) : (
+                <span className="flex flex-col items-center gap-1.5">
+                  <ImagePlus className="size-6" />
+                  {readOnly ? "Ảnh món (chưa có)" : "Bấm để chọn ảnh"}
+                </span>
+              )}
+              {uploading && (
+                <span className="absolute inset-0 flex items-center justify-center gap-2 bg-background/70 text-foreground">
+                  <Loader2 className="size-4 animate-spin" />
+                  Đang tải ảnh...
+                </span>
+              )}
+            </button>
+            {!readOnly && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                disabled={uploading}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="mr-1.5 size-3.5" />
+                {form.image ? "Đổi ảnh khác" : "Tải ảnh lên"}
+              </Button>
+            )}
           </div>
-        </Field>
+        </div>
+      </div>
 
-        <Field label="Công thức (định mức nguyên liệu)">
-          <RecipeEditor
-            value={recipeItems}
-            onChange={setRecipeItems}
-            readOnly={readOnly}
-            materials={materials}
-          />
-        </Field>
+      {/* Tuỳ chọn Size */}
+      <div className="space-y-3 rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold">Tuỳ chọn Size</h2>
+        <div className="flex flex-wrap gap-4">
+          {form.sizes?.map((size, idx) => (
+            <div key={size.name} className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant={size.active ? "default" : "outline"}
+                size="sm"
+                disabled={readOnly}
+                className={`h-8 rounded-full px-4 ${size.active ? 'bg-primary' : ''}`}
+                onClick={() => {
+                  const newSizes = [...form.sizes];
+                  newSizes[idx].active = !newSizes[idx].active;
+                  set("sizes", newSizes);
+                }}
+              >
+                {size.name}
+              </Button>
+              {size.active && (
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-muted-foreground">+</span>
+                  <input
+                    type="number"
+                    placeholder="Giá cộng thêm"
+                    disabled={readOnly}
+                    value={size.priceAdjustment}
+                    onChange={(e) => {
+                      const newSizes = [...form.sizes];
+                      newSizes[idx].priceAdjustment = e.target.value;
+                      set("sizes", newSizes);
+                    }}
+                    className="h-8 w-24 rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                  <span className="text-xs text-muted-foreground">đ</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
 
-        <Field label={TEXT.fieldDescription} required>
-          <textarea
-            value={form.description}
-            disabled={readOnly}
-            onChange={(e) => set("description", e.target.value)}
-            rows={3}
-            className="flex w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-          />
-        </Field>
-
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {/* Công thức */}
+      <div className="space-y-3 rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold">Công thức (định mức nguyên liệu)</h2>
+        <RecipeEditor
+          value={recipeItems}
+          onChange={setRecipeItems}
+          readOnly={readOnly}
+          materials={materials}
+        />
       </div>
 
       {/* Footer buttons */}
