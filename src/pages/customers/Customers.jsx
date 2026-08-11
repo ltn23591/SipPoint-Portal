@@ -61,7 +61,7 @@ export default function Customers() {
       page,
       limit: pageSize,
       ...(search ? { search } : {}),
-      ...(tier !== ALL_TIERS ? { tier } : {}),
+      ...(tier !== ALL_TIERS ? { tierId: tier } : {}),
     }),
     [page, pageSize, search, tier]
   );
@@ -210,7 +210,7 @@ export default function Customers() {
           <SelectContent>
             <SelectItem value={ALL_TIERS}>Tất cả hạng</SelectItem>
             {tiers.map((t) => (
-              <SelectItem key={t._id || t.name} value={t.name}>
+              <SelectItem key={t._id} value={t._id}>
                 {t.name}
               </SelectItem>
             ))}
