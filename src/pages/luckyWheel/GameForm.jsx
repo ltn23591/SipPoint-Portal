@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, Plus, Trash2, Upload, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ROUTE_PATH } from "@/constants/routePaths";
-import { GAME_REWARD_TYPE, GAME_REWARD_TYPE_LABEL } from "@/constants/application";
+import { GAME_REWARD_TYPE, GAME_REWARD_TYPE_LABEL, GAME_STATUS, GAME_STATUS_LABEL } from "@/constants/application";
 import { GameApi, VoucherApi, CustomerSegmentApi, UploadApi } from "@/apis";
 import { SegmentPickerDialog } from "./SegmentPickerDialog";
 
@@ -54,7 +54,11 @@ export default function GameForm() {
   const { id } = useParams();
   const isEdit = !!id;
   const navigate = useNavigate();
+  const location = useLocation();
   const qc = useQueryClient();
+  // Nhân bản: dữ liệu game nguồn được điều hướng kèm theo (xem LuckyWheel.jsx), dùng để
+  // tiền điền y hệt màn hình tạo mới, cho phép setup lại trước khi lưu.
+  const cloneFrom = !isEdit ? location.state?.cloneFrom : null;
 
   const [form, setForm] = useState({
     name: "",
@@ -69,6 +73,8 @@ export default function GameForm() {
     defaultTurnCount: "",
     dailyEnabled: false,
     dailyQuantity: 1,
+    isExchangeTurnEnabled: false,
+    turnRewardAmount: "",
     appliedSegmentIds: [],
     publishNow: false,
   });
@@ -96,7 +102,7 @@ export default function GameForm() {
   });
 
   // Load khi sửa
-  const { data: detail } = useQuery({
+  const { data: queryDetail } = useQuery({
     queryKey: ["game-detail", id],
     enabled: isEdit,
     queryFn: async () => {
@@ -105,6 +111,15 @@ export default function GameForm() {
       return res.data.data;
     },
   });
+  // Khi sửa: dữ liệu tải từ API. Khi nhân bản: dữ liệu game nguồn truyền qua điều hướng.
+  const detail = isEdit ? queryDetail : cloneFrom;
+
+  // Trò chơi đang chạy (đã xuất bản/tạm dừng): chỉ cho sửa nội dung hiển thị, không đụng
+  // tới ô thưởng/tỉ lệ phân bổ/nhóm áp dụng vì ảnh hưởng công bằng đang chơi.
+  const isRunningEdit = isEdit && (detail?.status === GAME_STATUS.PUBLISHED || detail?.status === GAME_STATUS.PAUSED);
+  const isTerminalEdit = isEdit && (detail?.status === GAME_STATUS.EXPIRED || detail?.status === GAME_STATUS.CANCELLED);
+  const lockConfig = isRunningEdit || isTerminalEdit; // khoá ô thưởng/tỉ lệ/nhóm/số lượt
+  const lockContent = isTerminalEdit; // khoá cả nội dung hiển thị
 
   useEffect(() => {
     if (!detail) return;
@@ -143,7 +158,7 @@ export default function GameForm() {
     const daily = (detail.activityConfigs || []).find((c) => c.activityType === "DAILY_CHECKIN");
     /* eslint-disable react-hooks/set-state-in-effect */
     setForm({
-      name: detail.name ?? "",
+      name: detail.name ? (isEdit ? detail.name : `${detail.name} (sao chép)`) : "",
       description: detail.description ?? "",
       backgroundUrl: detail.backgroundUrl ?? "",
       gameUrl: detail.gameUrl ?? "",
@@ -155,13 +170,15 @@ export default function GameForm() {
       defaultTurnCount: detail.defaultTurnCount ?? "",
       dailyEnabled: !!daily,
       dailyQuantity: daily?.turnQuantity ?? 1,
+      isExchangeTurnEnabled: !!detail.isExchangeTurnEnabled,
+      turnRewardAmount: detail.turnRewardAmount ?? "",
       appliedSegmentIds: (detail.appliedSegmentIds || []).map((s) => (typeof s === "object" ? s._id : s)),
       publishNow: false,
     });
     setRewards(rw.length ? rw : [newReward()]);
     setDistributions(dist);
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [detail]);
+  }, [detail, isEdit]);
 
   const setField = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const setReward = (key, patch) =>
@@ -208,49 +225,64 @@ export default function GameForm() {
     }
   };
 
-  const buildPayload = () => ({
-    name: form.name.trim(),
-    description: form.description.trim() || undefined,
-    backgroundUrl: form.backgroundUrl || undefined,
-    gameUrl: form.gameUrl || undefined,
-    content: form.content || undefined,
-    startDate: form.startDate || undefined,
-    endDate: form.endDate,
-    timeFrom: form.timeFrom || undefined,
-    timeTo: form.timeTo || undefined,
-    defaultTurnCount: Number(form.defaultTurnCount) || 0,
-    appliedSegmentIds: form.appliedSegmentIds,
-    rewards: rewards.map((r) => ({
-      displayName: r.displayName.trim(),
-      type: r.type,
-      voucherId: r.type === GAME_REWARD_TYPE.VOUCHER ? r.voucherId || undefined : undefined,
-      rewardValue: r.type === GAME_REWARD_TYPE.POINTS ? Number(r.rewardValue) || 0 : undefined,
-      message: r.type === GAME_REWARD_TYPE.MESSAGE ? r.message : undefined,
-      totalReward: Number(r.totalReward) || 0,
-      quantity: Number(r.quantity) || 1,
-      isDefault: !!r.isDefault,
-      allowManyTimes: !!r.allowManyTimes,
-    })),
-    distributions: distributions
-      .filter((d) => d.segmentId && d.rewardIndex !== "")
-      .map((d) => ({
-        gameRewardIndex: Number(d.rewardIndex),
-        segmentId: d.segmentId,
-        rate: Number(d.rate) || 0,
-        maxQuantity: Number(d.maxQuantity) || 0,
-        dateFrom: d.dateFrom || undefined,
-        dateTo: d.dateTo || undefined,
-        allowManyTimes: !!d.allowManyTimes,
+  const buildPayload = () => {
+    const displayFields = {
+      description: form.description.trim() || undefined,
+      backgroundUrl: form.backgroundUrl || undefined,
+      gameUrl: form.gameUrl || undefined,
+      content: form.content || undefined,
+      startDate: form.startDate || undefined,
+      endDate: form.endDate,
+      timeFrom: form.timeFrom || undefined,
+      timeTo: form.timeTo || undefined,
+    };
+    // Trò chơi đang chạy: chỉ gửi các trường nội dung hiển thị, không đụng tới cấu hình
+    // ảnh hưởng vận hành/công bằng đang chơi (BE cũng chặn nếu gửi kèm các trường đó).
+    if (isRunningEdit) return displayFields;
+
+    return {
+      name: form.name.trim(),
+      ...displayFields,
+      defaultTurnCount: Number(form.defaultTurnCount) || 0,
+      isExchangeTurnEnabled: form.isExchangeTurnEnabled,
+      turnRewardAmount: form.isExchangeTurnEnabled ? Number(form.turnRewardAmount) || 0 : undefined,
+      appliedSegmentIds: form.appliedSegmentIds,
+      rewards: rewards.map((r) => ({
+        displayName: r.displayName.trim(),
+        type: r.type,
+        voucherId: r.type === GAME_REWARD_TYPE.VOUCHER ? r.voucherId || undefined : undefined,
+        rewardValue: r.type === GAME_REWARD_TYPE.POINTS ? Number(r.rewardValue) || 0 : undefined,
+        message: r.type === GAME_REWARD_TYPE.MESSAGE ? r.message : undefined,
+        totalReward: Number(r.totalReward) || 0,
+        quantity: Number(r.quantity) || 1,
+        isDefault: !!r.isDefault,
+        allowManyTimes: !!r.allowManyTimes,
       })),
-    activityConfigs: form.dailyEnabled
-      ? [{ activityType: "DAILY_CHECKIN", turnQuantity: Number(form.dailyQuantity) || 1, isActive: true }]
-      : [],
-  });
+      distributions: distributions
+        .filter((d) => d.segmentId && d.rewardIndex !== "")
+        .map((d) => ({
+          gameRewardIndex: Number(d.rewardIndex),
+          segmentId: d.segmentId,
+          rate: Number(d.rate) || 0,
+          maxQuantity: Number(d.maxQuantity) || 0,
+          dateFrom: d.dateFrom || undefined,
+          dateTo: d.dateTo || undefined,
+          allowManyTimes: !!d.allowManyTimes,
+        })),
+      activityConfigs: form.dailyEnabled
+        ? [{ activityType: "DAILY_CHECKIN", turnQuantity: Number(form.dailyQuantity) || 1, isActive: true }]
+        : [],
+    };
+  };
 
   const validate = () => {
-    if (!form.name.trim()) return "Vui lòng nhập tên trò chơi.";
     if (!form.endDate) return "Vui lòng chọn ngày kết thúc.";
     if (form.startDate && form.startDate >= form.endDate) return "Ngày kết thúc phải sau ngày bắt đầu.";
+    if (isRunningEdit) return null;
+    if (!form.name.trim()) return "Vui lòng nhập tên trò chơi.";
+    if (form.isExchangeTurnEnabled && !(Number(form.turnRewardAmount) > 0)) {
+      return "Vui lòng nhập số điểm cần để đổi 1 lượt chơi.";
+    }
     if (rewards.length === 0) return "Cần ít nhất một ô phần thưởng.";
     const defaults = rewards.filter((r) => r.isDefault);
     if (defaults.length !== 1) return "Phải có đúng một ô mặc định (lời chúc).";
@@ -310,11 +342,25 @@ export default function GameForm() {
           <Button variant="outline" onClick={() => navigate(ROUTE_PATH.LUCKY_WHEEL)} disabled={loading}>
             <ArrowLeft className="size-4" /> Quay lại
           </Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? <Loader2 className="size-4 animate-spin" /> : null} Lưu
-          </Button>
+          {!lockContent && (
+            <Button onClick={handleSave} disabled={loading}>
+              {loading ? <Loader2 className="size-4 animate-spin" /> : null} Lưu
+            </Button>
+          )}
         </div>
       </div>
+
+      {isRunningEdit && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+          Trò chơi đang {GAME_STATUS_LABEL[detail?.status]?.toLowerCase()}: chỉ có thể chỉnh sửa mô tả, thể lệ, ngày/giờ áp dụng
+          và hình ảnh. Ô thưởng, tỉ lệ phân bổ, nhóm khách hàng và số lượt chơi đã bị khoá để đảm bảo công bằng.
+        </div>
+      )}
+      {isTerminalEdit && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          Trò chơi đã {GAME_STATUS_LABEL[detail?.status]?.toLowerCase()}, không thể chỉnh sửa.
+        </div>
+      )}
 
       {/* Thông tin chung */}
       <div className="grid gap-6 rounded-xl border border-border bg-card p-6 lg:grid-cols-2">
@@ -322,11 +368,11 @@ export default function GameForm() {
           <h2 className="text-lg font-semibold">Thông tin chung</h2>
           <div className="space-y-2">
             <Label>Tên trò chơi <span className="text-destructive">*</span></Label>
-            <Input value={form.name} onChange={(e) => setField("name", e.target.value)} placeholder="Nhập tên trò chơi" />
+            <Input value={form.name} disabled={lockConfig} onChange={(e) => setField("name", e.target.value)} placeholder="Nhập tên trò chơi" />
           </div>
           <div className="space-y-2">
             <Label>Mô tả</Label>
-            <Textarea value={form.description} onChange={(e) => setField("description", e.target.value)} rows={3} />
+            <Textarea value={form.description} disabled={lockContent} onChange={(e) => setField("description", e.target.value)} rows={3} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
@@ -341,27 +387,29 @@ export default function GameForm() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Ngày bắt đầu</Label>
-              <Input type="date" value={form.startDate} onChange={(e) => setField("startDate", e.target.value)} />
+              <Input type="date" value={form.startDate} disabled={lockContent} onChange={(e) => setField("startDate", e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Ngày kết thúc <span className="text-destructive">*</span></Label>
-              <Input type="date" value={form.endDate} onChange={(e) => setField("endDate", e.target.value)} />
+              <Input type="date" value={form.endDate} disabled={lockContent} onChange={(e) => setField("endDate", e.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Giờ bắt đầu</Label>
-              <Input type="time" value={form.timeFrom} onChange={(e) => setField("timeFrom", e.target.value)} />
+              <Input type="time" value={form.timeFrom} disabled={lockContent} onChange={(e) => setField("timeFrom", e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Giờ kết thúc</Label>
-              <Input type="time" value={form.timeTo} onChange={(e) => setField("timeTo", e.target.value)} />
+              <Input type="time" value={form.timeTo} disabled={lockContent} onChange={(e) => setField("timeTo", e.target.value)} />
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Switch checked={form.publishNow} onCheckedChange={(v) => setField("publishNow", v)} />
-            <span className="text-sm">Xuất bản ngay sau khi lưu</span>
-          </div>
+          {!isEdit && (
+            <div className="flex items-center gap-3">
+              <Switch checked={form.publishNow} onCheckedChange={(v) => setField("publishNow", v)} />
+              <span className="text-sm">Xuất bản ngay sau khi lưu</span>
+            </div>
+          )}
         </div>
 
         <div className="space-y-4">
@@ -370,6 +418,7 @@ export default function GameForm() {
               label="Hình ảnh"
               url={form.backgroundUrl}
               uploading={uploading.bg}
+              disabled={lockContent}
               inputRef={bgRef}
               onPick={(f) => uploadImage(f, "backgroundUrl")}
             />
@@ -377,13 +426,14 @@ export default function GameForm() {
               label="Hình ảnh vòng xoay"
               url={form.gameUrl}
               uploading={uploading.wheel}
+              disabled={lockContent}
               inputRef={wheelRef}
               onPick={(f) => uploadImage(f, "gameUrl")}
             />
           </div>
           <div className="space-y-2">
             <Label>Thông tin chi tiết (thể lệ)</Label>
-            <Textarea value={form.content} onChange={(e) => setField("content", e.target.value)} rows={8} placeholder="Thể lệ trò chơi..." />
+            <Textarea value={form.content} disabled={lockContent} onChange={(e) => setField("content", e.target.value)} rows={8} placeholder="Thể lệ trò chơi..." />
           </div>
         </div>
       </div>
@@ -394,16 +444,26 @@ export default function GameForm() {
           <h2 className="text-lg font-semibold">Quy định trò chơi</h2>
           <div className="space-y-2">
             <Label>Số lượt chơi mặc định <span className="text-destructive">*</span></Label>
-            <Input type="number" min="0" value={form.defaultTurnCount} onChange={(e) => setField("defaultTurnCount", e.target.value)} />
+            <Input type="number" min="0" value={form.defaultTurnCount} disabled={lockConfig} onChange={(e) => setField("defaultTurnCount", e.target.value)} />
           </div>
           <div className="flex items-center gap-3">
-            <Switch checked={form.dailyEnabled} onCheckedChange={(v) => setField("dailyEnabled", v)} />
+            <Switch checked={form.dailyEnabled} disabled={lockConfig} onCheckedChange={(v) => setField("dailyEnabled", v)} />
             <span className="text-sm">Tặng thêm lượt miễn phí mỗi ngày (điểm danh)</span>
           </div>
           {form.dailyEnabled && (
             <div className="space-y-2">
               <Label>Số lượt tặng mỗi ngày</Label>
-              <Input type="number" min="1" value={form.dailyQuantity} onChange={(e) => setField("dailyQuantity", e.target.value)} />
+              <Input type="number" min="1" value={form.dailyQuantity} disabled={lockConfig} onChange={(e) => setField("dailyQuantity", e.target.value)} />
+            </div>
+          )}
+          <div className="flex items-center gap-3">
+            <Switch checked={form.isExchangeTurnEnabled} disabled={lockConfig} onCheckedChange={(v) => setField("isExchangeTurnEnabled", v)} />
+            <span className="text-sm">Cho phép dùng điểm mua lượt quay</span>
+          </div>
+          {form.isExchangeTurnEnabled && (
+            <div className="space-y-2">
+              <Label>Số điểm cho 1 lượt <span className="text-destructive">*</span></Label>
+              <Input type="number" min="1" value={form.turnRewardAmount} disabled={lockConfig} onChange={(e) => setField("turnRewardAmount", e.target.value)} />
             </div>
           )}
         </div>
@@ -411,7 +471,7 @@ export default function GameForm() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Nhóm khách hàng áp dụng</h2>
-            <Button type="button" variant="outline" size="sm" onClick={() => setSegPickerOpen(true)}>
+            <Button type="button" variant="outline" size="sm" disabled={lockConfig} onClick={() => setSegPickerOpen(true)}>
               <Users className="size-4" /> Thêm nhóm khách hàng
             </Button>
           </div>
@@ -422,13 +482,15 @@ export default function GameForm() {
               {appliedSegments.map((s) => (
                 <span key={s.id} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm">
                   {s.name}
-                  <button
-                    type="button"
-                    className="text-muted-foreground hover:text-destructive"
-                    onClick={() => setField("appliedSegmentIds", form.appliedSegmentIds.filter((x) => x !== s.id))}
-                  >
-                    ×
-                  </button>
+                  {!lockConfig && (
+                    <button
+                      type="button"
+                      className="text-muted-foreground hover:text-destructive"
+                      onClick={() => setField("appliedSegmentIds", form.appliedSegmentIds.filter((x) => x !== s.id))}
+                    >
+                      ×
+                    </button>
+                  )}
                 </span>
               ))}
             </div>
@@ -445,13 +507,13 @@ export default function GameForm() {
               <span className="font-medium">Ô {i + 1}</span>
               <div className="flex items-center gap-4">
                 <label className="flex items-center gap-1.5 text-sm">
-                  <input type="radio" name="defaultReward" checked={r.isDefault} onChange={() => chooseDefault(r.key)} />
+                  <input type="radio" name="defaultReward" checked={r.isDefault} disabled={lockConfig} onChange={() => chooseDefault(r.key)} />
                   Ô mặc định
                 </label>
                 <label className="flex items-center gap-1.5 text-sm">
                   <Checkbox
                     checked={r.allowManyTimes}
-                    disabled={r.isDefault}
+                    disabled={lockConfig || r.isDefault}
                     onCheckedChange={(v) => setReward(r.key, { allowManyTimes: !!v })}
                   />
                   Trúng nhiều lần
@@ -461,7 +523,7 @@ export default function GameForm() {
                   variant="ghost"
                   size="icon-sm"
                   className="text-destructive"
-                  disabled={rewards.length === 1}
+                  disabled={lockConfig || rewards.length === 1}
                   onClick={() => setRewards((prev) => prev.filter((x) => x.key !== r.key))}
                 >
                   <Trash2 className="size-4" />
@@ -472,11 +534,11 @@ export default function GameForm() {
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Tên hiển thị <span className="text-destructive">*</span></Label>
-                <Input value={r.displayName} onChange={(e) => setReward(r.key, { displayName: e.target.value })} />
+                <Input value={r.displayName} disabled={lockConfig} onChange={(e) => setReward(r.key, { displayName: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label>Tổng phần thưởng</Label>
-                <Input type="number" min="0" value={r.totalReward} onChange={(e) => setReward(r.key, { totalReward: e.target.value })} />
+                <Input type="number" min="0" value={r.totalReward} disabled={lockConfig} onChange={(e) => setReward(r.key, { totalReward: e.target.value })} />
               </div>
             </div>
 
@@ -487,7 +549,7 @@ export default function GameForm() {
                     type="radio"
                     name={`type-${r.key}`}
                     checked={r.type === value}
-                    disabled={r.isDefault}
+                    disabled={lockConfig || r.isDefault}
                     onChange={() => setReward(r.key, { type: value })}
                   />
                   {label}
@@ -500,7 +562,7 @@ export default function GameForm() {
                 <>
                   <div className="space-y-2">
                     <Label>Quà tặng (voucher)</Label>
-                    <Select value={r.voucherId} onValueChange={(v) => setReward(r.key, { voucherId: v })}>
+                    <Select value={r.voucherId} disabled={lockConfig} onValueChange={(v) => setReward(r.key, { voucherId: v })}>
                       <SelectTrigger><SelectValue placeholder="Chọn voucher" /></SelectTrigger>
                       <SelectContent>
                         {vouchers.map((v) => (
@@ -511,28 +573,30 @@ export default function GameForm() {
                   </div>
                   <div className="space-y-2">
                     <Label>Số lượng tặng</Label>
-                    <Input type="number" min="1" value={r.quantity} onChange={(e) => setReward(r.key, { quantity: e.target.value })} />
+                    <Input type="number" min="1" value={r.quantity} disabled={lockConfig} onChange={(e) => setReward(r.key, { quantity: e.target.value })} />
                   </div>
                 </>
               )}
               {r.type === GAME_REWARD_TYPE.POINTS && (
                 <div className="space-y-2">
                   <Label>Số xu (điểm)</Label>
-                  <Input type="number" min="1" value={r.rewardValue} onChange={(e) => setReward(r.key, { rewardValue: e.target.value })} />
+                  <Input type="number" min="1" value={r.rewardValue} disabled={lockConfig} onChange={(e) => setReward(r.key, { rewardValue: e.target.value })} />
                 </div>
               )}
               {r.type === GAME_REWARD_TYPE.MESSAGE && (
                 <div className="space-y-2 md:col-span-2">
                   <Label>Lời chúc</Label>
-                  <Input value={r.message} onChange={(e) => setReward(r.key, { message: e.target.value })} placeholder="VD: Chúc bạn may mắn lần sau!" />
+                  <Input value={r.message} disabled={lockConfig} onChange={(e) => setReward(r.key, { message: e.target.value })} placeholder="VD: Chúc bạn may mắn lần sau!" />
                 </div>
               )}
             </div>
           </div>
         ))}
-        <Button type="button" variant="outline" className="w-full" onClick={() => setRewards((prev) => [...prev, newReward()])}>
-          <Plus className="size-4" /> Thêm ô phần thưởng
-        </Button>
+        {!lockConfig && (
+          <Button type="button" variant="outline" className="w-full" onClick={() => setRewards((prev) => [...prev, newReward()])}>
+            <Plus className="size-4" /> Thêm ô phần thưởng
+          </Button>
+        )}
       </div>
 
       {/* Phân bổ tỉ lệ trúng */}
@@ -561,7 +625,7 @@ export default function GameForm() {
                 distributions.map((d) => (
                   <tr key={d.key} className="border-t border-border">
                     <td className="p-2 min-w-40">
-                      <Select value={d.segmentId} onValueChange={(v) => setDist(d.key, { segmentId: v })}>
+                      <Select value={d.segmentId} disabled={lockConfig} onValueChange={(v) => setDist(d.key, { segmentId: v })}>
                         <SelectTrigger><SelectValue placeholder="Chọn nhóm" /></SelectTrigger>
                         <SelectContent>
                           {form.appliedSegmentIds.length === 0 ? (
@@ -575,7 +639,7 @@ export default function GameForm() {
                       </Select>
                     </td>
                     <td className="p-2 min-w-40">
-                      <Select value={String(d.rewardIndex)} onValueChange={(v) => setDist(d.key, { rewardIndex: v })}>
+                      <Select value={String(d.rewardIndex)} disabled={lockConfig} onValueChange={(v) => setDist(d.key, { rewardIndex: v })}>
                         <SelectTrigger><SelectValue placeholder="Chọn ô" /></SelectTrigger>
                         <SelectContent>
                           {rewards.map((r, i) =>
@@ -588,20 +652,20 @@ export default function GameForm() {
                         </SelectContent>
                       </Select>
                     </td>
-                    <td className="p-2"><Input type="number" min="0" max="100" value={d.rate} onChange={(e) => setDist(d.key, { rate: e.target.value })} /></td>
-                    <td className="p-2"><Input type="number" min="0" value={d.maxQuantity} onChange={(e) => setDist(d.key, { maxQuantity: e.target.value })} /></td>
+                    <td className="p-2"><Input type="number" min="0" max="100" value={d.rate} disabled={lockConfig} onChange={(e) => setDist(d.key, { rate: e.target.value })} /></td>
+                    <td className="p-2"><Input type="number" min="0" value={d.maxQuantity} disabled={lockConfig} onChange={(e) => setDist(d.key, { maxQuantity: e.target.value })} /></td>
                     <td className="p-2">
                       <div className="flex items-center gap-1">
-                        <Input type="date" value={d.dateFrom} onChange={(e) => setDist(d.key, { dateFrom: e.target.value })} />
+                        <Input type="date" value={d.dateFrom} disabled={lockConfig} onChange={(e) => setDist(d.key, { dateFrom: e.target.value })} />
                         <span>→</span>
-                        <Input type="date" value={d.dateTo} onChange={(e) => setDist(d.key, { dateTo: e.target.value })} />
+                        <Input type="date" value={d.dateTo} disabled={lockConfig} onChange={(e) => setDist(d.key, { dateTo: e.target.value })} />
                       </div>
                     </td>
                     <td className="p-2 text-center">
-                      <Checkbox checked={d.allowManyTimes} onCheckedChange={(v) => setDist(d.key, { allowManyTimes: !!v })} />
+                      <Checkbox checked={d.allowManyTimes} disabled={lockConfig} onCheckedChange={(v) => setDist(d.key, { allowManyTimes: !!v })} />
                     </td>
                     <td className="p-2">
-                      <Button type="button" variant="ghost" size="icon-sm" className="text-destructive" onClick={() => setDistributions((prev) => prev.filter((x) => x.key !== d.key))}>
+                      <Button type="button" variant="ghost" size="icon-sm" className="text-destructive" disabled={lockConfig} onClick={() => setDistributions((prev) => prev.filter((x) => x.key !== d.key))}>
                         <Trash2 className="size-4" />
                       </Button>
                     </td>
@@ -611,9 +675,11 @@ export default function GameForm() {
             </tbody>
           </table>
         </div>
-        <Button type="button" variant="outline" className="w-full" onClick={() => setDistributions((prev) => [...prev, newDist()])}>
-          <Plus className="size-4" /> Thêm dòng
-        </Button>
+        {!lockConfig && (
+          <Button type="button" variant="outline" className="w-full" onClick={() => setDistributions((prev) => [...prev, newDist()])}>
+            <Plus className="size-4" /> Thêm dòng
+          </Button>
+        )}
       </div>
 
       <SegmentPickerDialog
@@ -626,14 +692,15 @@ export default function GameForm() {
   );
 }
 
-function ImagePicker({ label, url, uploading, inputRef, onPick }) {
+function ImagePicker({ label, url, uploading, inputRef, onPick, disabled = false }) {
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
       <button
         type="button"
+        disabled={disabled}
         onClick={() => inputRef.current?.click()}
-        className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-muted/30 hover:bg-muted/50"
+        className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-muted/30 hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {uploading ? (
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
