@@ -44,7 +44,7 @@ export function SidebarLeft() {
         )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
+      <nav className="themed-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-4">
         <ul className="space-y-1">
           {MENU_ITEMS.map((item) =>
             item.type === "header" ? (

@@ -130,7 +130,7 @@ export default function Reviews() {
         pageIndex={page}
         pageSize={pageSize}
         onChange={(p, ps) => { setPage(p); setPageSize(ps); }}
-        heightOffset={220}
+        heightOffset={16}
       />
     </div>
   );

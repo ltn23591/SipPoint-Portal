@@ -186,7 +186,7 @@ export default function Categories() {
           setPage(p);
           setPageSize(ps);
         }}
-        heightOffset={220}
+        heightOffset={16}
         empty="Chưa có danh mục nào."
       />
 

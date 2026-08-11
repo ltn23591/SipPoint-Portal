@@ -181,8 +181,11 @@ export function OrderCard({ order, onStatusChange, onView, onEdit }) {
         confirmText={TEXT.cancelOrder}
         cancelText={TEXT.confirmNo}
         variant="destructive"
-        onConfirm={() => {
-          onStatusChange?.(order._id, ORDER_STATUS.CANCELLED);
+        showReason
+        reasonLabel="Lý do hủy đơn"
+        reasonPlaceholder="VD: Khách yêu cầu hủy, hết món..."
+        onConfirm={(reason) => {
+          onStatusChange?.(order._id, ORDER_STATUS.CANCELLED, reason);
           setCancelOpen(false);
         }}
       />

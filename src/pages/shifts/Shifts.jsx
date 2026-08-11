@@ -160,7 +160,7 @@ export default function Shifts() {
         rowKey="_id"
         loading={isLoading}
         total={0}
-        heightOffset={200}
+        heightOffset={16}
         empty={isError ? "Không tải được dữ liệu." : "Chưa có ca làm việc nào."}
       />
 
