@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -51,19 +52,22 @@ export default function ReviewDetail() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon-sm" onClick={() => navigate(ROUTE_PATH.REVIEWS)}>
-          <ArrowLeft className="size-4" />
-        </Button>
+    <div className="flex h-full flex-col gap-4 overflow-y-auto pb-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-secondary">{TEXT.detailTitle}</h1>
-          <p className="text-sm text-muted-foreground">{review.customer.fullName}</p>
+          <p className="text-xs text-muted-foreground">
+            {TEXT.pageTitle} / {TEXT.detailTitle}
+          </p>
+          <h1 className="text-2xl font-semibold">{TEXT.detailTitle}</h1>
         </div>
+        <Button variant="outline" onClick={() => navigate(ROUTE_PATH.REVIEWS)}>
+          <ArrowLeft className="size-4" /> {TEXT.back}
+        </Button>
       </div>
 
       {/* Nội dung đánh giá */}
-      <div className="space-y-3 rounded-xl border bg-card p-6 shadow-sm">
+      <div className="space-y-3 rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold">{review.customer.fullName}</h2>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-0.5">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -87,9 +91,10 @@ export default function ReviewDetail() {
       </div>
 
       {/* Phản hồi */}
-      <div className="space-y-4 rounded-xl border bg-card p-6 shadow-sm">
+      <div className="space-y-4 rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold">Phản hồi</h2>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">{TEXT.respondLabel}</label>
+          <Label>{TEXT.respondLabel}</Label>
           <Textarea
             rows={4}
             value={response}
@@ -98,7 +103,7 @@ export default function ReviewDetail() {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">{TEXT.statusLabel}</label>
+          <Label>{TEXT.statusLabel}</Label>
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger className="w-56">
               <SelectValue />
