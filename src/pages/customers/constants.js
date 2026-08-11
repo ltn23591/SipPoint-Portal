@@ -17,4 +17,5 @@ export const POINT_TRANSACTION_TYPE_LABEL = {
   REFUND: "Hoàn tiền",
   LUCKY_WHEEL: "Vòng quay may mắn",
   LUCKY_GAME: "Trò chơi may mắn",
+  LUCKY_GAME_EXCHANGE_TURN: "Đổi lượt chơi",
 };

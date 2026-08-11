@@ -25,58 +25,6 @@ import { GameWinnersDialog } from "./GameWinnersDialog";
 
 const ALL_STATUS = "__all__";
 
-// Chuyển detail -> payload tạo mới (dùng cho Nhân bản)
-const toCreatePayload = (g) => {
-  const rewards = (g.rewards || [])
-    .slice()
-    .sort((a, b) => a.index - b.index)
-    .map((r) => ({
-      displayName: r.displayName,
-      type: r.type,
-      voucherId: typeof r.voucherId === "object" ? r.voucherId?._id : r.voucherId,
-      rewardValue: r.rewardValue,
-      message: r.message,
-      totalReward: r.totalReward,
-      quantity: r.quantity,
-      isDefault: r.isDefault,
-      allowManyTimes: r.allowManyTimes,
-    }));
-  const idToIndex = {};
-  (g.rewards || []).slice().sort((a, b) => a.index - b.index).forEach((r, i) => {
-    if (r._id) idToIndex[String(r._id)] = i;
-  });
-  const distributions = (g.distributions || []).map((d) => ({
-    gameRewardIndex: idToIndex[String(typeof d.gameRewardId === "object" ? d.gameRewardId?._id : d.gameRewardId)] ?? 0,
-    segmentId: typeof d.segmentId === "object" ? d.segmentId?._id : d.segmentId,
-    rate: d.rate,
-    maxQuantity: d.maxQuantity,
-    dateFrom: d.dateFrom,
-    dateTo: d.dateTo,
-    allowManyTimes: d.allowManyTimes,
-  }));
-  return {
-    name: `${g.name} (sao chép)`,
-    description: g.description,
-    backgroundUrl: g.backgroundUrl,
-    gameUrl: g.gameUrl,
-    content: g.content,
-    startDate: g.startDate,
-    endDate: g.endDate,
-    timeFrom: g.timeFrom,
-    timeTo: g.timeTo,
-    defaultTurnCount: g.defaultTurnCount,
-    appliedSegmentIds: (g.appliedSegmentIds || []).map((s) => (typeof s === "object" ? s._id : s)),
-    rewards,
-    distributions,
-    activityConfigs: (g.activityConfigs || []).map((c) => ({
-      activityType: c.activityType,
-      turnQuantity: c.turnQuantity,
-      dailyLimit: c.dailyLimit,
-      isActive: c.isActive,
-    })),
-  };
-};
-
 export default function LuckyWheel() {
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -125,17 +73,16 @@ export default function LuckyWheel() {
     onError: (err) => toast.error(err.message),
   });
 
+  // Nhân bản: chỉ lấy dữ liệu game nguồn rồi mở màn hình tạo mới đã điền sẵn, để admin
+  // xem lại/setup lại trước khi lưu - không tự động tạo game ngay.
   const cloneMutation = useMutation({
     mutationFn: async (g) => {
       const detailRes = await GameApi.getById(g._id);
       if (!detailRes?.data?.success) throw new Error("Không tải được cấu hình để nhân bản.");
-      const res = await GameApi.create(toCreatePayload(detailRes.data.data));
-      if (!res?.data?.success) throw new Error(res?.data?.message || "Nhân bản thất bại.");
-      return res.data;
+      return detailRes.data.data;
     },
-    onSuccess: () => {
-      toast.success("Đã nhân bản trò chơi (bản nháp).");
-      qc.invalidateQueries({ queryKey: ["games"] });
+    onSuccess: (detail) => {
+      navigate(ROUTE_PATH.LUCKY_WHEEL_CREATE, { state: { cloneFrom: detail } });
     },
     onError: (err) => toast.error(err.message),
   });
@@ -235,14 +182,14 @@ export default function LuckyWheel() {
       width: 140,
       render: (g) => (
         <div className="flex gap-1">
-          <Button variant="ghost" size="icon-sm" title="Xem / Sửa" onClick={() => navigate(`/lucky-wheel/${g._id}/edit`)}>
+          <Button variant="ghost" size="icon-sm" title="Xem chi tiết" onClick={() => navigate(`/lucky-wheel/${g._id}`)}>
             <Eye className="size-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon-sm"
-            title="Sửa (chỉ khi nháp)"
-            disabled={g.status !== GAME_STATUS.DRAFT}
+            title="Sửa"
+            disabled={g.status === GAME_STATUS.EXPIRED || g.status === GAME_STATUS.CANCELLED}
             onClick={() => navigate(`/lucky-wheel/${g._id}/edit`)}
           >
             <Pencil className="size-4" />
@@ -334,7 +281,7 @@ export default function LuckyWheel() {
           setPage(p);
           setPageSize(ps);
         }}
-        heightOffset={220}
+        heightOffset={16}
         empty={isError ? "Không tải được dữ liệu." : "Chưa có trò chơi nào."}
       />
 
