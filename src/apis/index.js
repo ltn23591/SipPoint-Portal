@@ -252,6 +252,11 @@ export const GameApi = {
     const endpoint = `/api/v1/games/${id}/winners/${customerId}`;
     return apiCall(API_METHOD.GET, endpoint);
   },
+  // Danh sách các lượt trúng của riêng 1 ô thưởng
+  getRewardWinners: (id, rewardId, params, signal) => {
+    const endpoint = `/api/v1/games/${id}/rewards/${rewardId}/winners`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
   // Cấp thêm lượt cho một khách: payload = { customerId, quantity }
   grantBonusTurns: (id, payload) => {
     const endpoint = `/api/v1/games/${id}/bonus-turn`;

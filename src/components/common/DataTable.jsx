@@ -44,11 +44,9 @@ export function DataTable({
       const el = wrapperRef.current;
       if (!el) return;
       const top = el.getBoundingClientRect().top;
-      const thead = el.querySelector("thead");
-      const theadH = thead?.offsetHeight ?? 40;
       const hasPagination = total > 0;
       const paginationH = hasPagination ? PAGINATION_HEIGHT : 0;
-      const y = window.innerHeight - top - theadH - paginationH - heightOffset - 24;
+      const y = window.innerHeight - top - paginationH - heightOffset - 24;
       setScrollY(`${Math.max(150, Math.floor(y))}px`);
     };
 
