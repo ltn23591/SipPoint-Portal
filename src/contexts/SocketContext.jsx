@@ -37,8 +37,10 @@ export const SocketProvider = ({ children }) => {
         duration: 8000,
       });
 
-      // Tự động reload danh sách đơn hàng của React Query
+      // Tự động reload danh sách đơn hàng & trạng thái bàn
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+      queryClient.invalidateQueries({ queryKey: ["zones"] });
     });
 
     // Lắng nghe sự kiện cập nhật trạng thái đơn hàng
@@ -50,8 +52,17 @@ export const SocketProvider = ({ children }) => {
         duration: 5000,
       });
 
-      // Tự động reload danh sách đơn hàng
+      // Tự động reload danh sách đơn hàng & trạng thái bàn
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+      queryClient.invalidateQueries({ queryKey: ["zones"] });
+    });
+
+    // Lắng nghe sự kiện cập nhật trạng thái bàn
+    socketInstance.on("table_updated", (updatedTable) => {
+      console.log("🔔 [Socket.io] Table updated:", updatedTable);
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+      queryClient.invalidateQueries({ queryKey: ["zones"] });
     });
 
     // Cảnh báo nguyên liệu sắp hết / đã hết
@@ -88,6 +99,7 @@ export const SocketProvider = ({ children }) => {
       socketInstance.off("connect");
       socketInstance.off("order_created");
       socketInstance.off("order_status_updated");
+      socketInstance.off("table_updated");
       socketInstance.off("low_stock");
       socketInstance.off("product_out_of_stock");
       socketInstance.off("disconnect");
