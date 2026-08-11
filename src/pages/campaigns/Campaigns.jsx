@@ -282,7 +282,7 @@ export default function Campaigns() {
           setPage(p);
           setPageSize(ps);
         }}
-        heightOffset={220}
+        heightOffset={16}
         empty={isError ? "Không tải được dữ liệu." : "Chưa có chiến dịch nào."}
       />
 

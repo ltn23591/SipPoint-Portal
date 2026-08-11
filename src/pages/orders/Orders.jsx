@@ -54,8 +54,8 @@ export default function Orders() {
   }, [orders, filters]);
 
   const statusMutation = useMutation({
-    mutationFn: async ({ id, status }) => {
-      const res = await OrdersApi.updateStatus(id, { status });
+    mutationFn: async ({ id, status, reason }) => {
+      const res = await OrdersApi.updateStatus(id, { status, reason });
       if (!res?.data?.success) {
         throw new Error(res?.data?.message || "Cập nhật trạng thái thất bại.");
       }
@@ -87,7 +87,7 @@ export default function Orders() {
       ) : (
         <OrderKanban
           orders={filteredOrders}
-          onStatusChange={(id, status) => statusMutation.mutate({ id, status })}
+          onStatusChange={(id, status, reason) => statusMutation.mutate({ id, status, reason })}
           onView={(order) => setDetailId(order._id)}
           onEdit={(order) =>
             navigate(ROUTE_PATH.ORDER_DETAIL.replace(":id", order._id), {

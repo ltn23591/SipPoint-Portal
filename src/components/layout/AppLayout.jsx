@@ -27,7 +27,7 @@ export function AppLayout() {
       <SidebarLeft />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar />
-        <main className="flex-1 overflow-y-auto px-6 py-5">
+        <main className="themed-scroll flex-1 overflow-y-auto overscroll-contain px-6 py-5">
           <Outlet />
         </main>
       </div>

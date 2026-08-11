@@ -357,7 +357,7 @@ export default function Menu() {
           setPage(p);
           setPageSize(ps);
         }}
-        heightOffset={220}
+        heightOffset={16}
         empty={isError ? TEXT.loadError : TEXT.empty}
       />
 

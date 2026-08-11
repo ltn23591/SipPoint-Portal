@@ -203,7 +203,7 @@ export const OrdersApi = {
     const endpoint = `/api/v1/orders`;
     return apiCall(API_METHOD.POST, endpoint, payload);
   },
-  // Đổi trạng thái: payload = { status } (PENDING/CONFIRMED/PREPARING/READY/COMPLETED/CANCELLED).
+  // Đổi trạng thái: payload = { status, reason } (reason bắt buộc khi status = CANCELLED).
   updateStatus: (id, payload) => {
     const endpoint = `/api/v1/orders/${id}/status`;
     return apiCall(API_METHOD.PATCH, endpoint, payload);

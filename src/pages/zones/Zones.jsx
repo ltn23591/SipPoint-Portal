@@ -201,7 +201,7 @@ export default function Zones() {
           setPage(p);
           setPageSize(ps);
         }}
-        heightOffset={220}
+        heightOffset={16}
         empty={isError ? "Không tải được dữ liệu." : "Chưa có khu vực nào."}
       />
 
