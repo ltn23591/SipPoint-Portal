@@ -269,22 +269,28 @@ export default function SegmentEditor() {
   const memberTotalPages = Math.max(1, Math.ceil((memberData?.total ?? 0) / 10));
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-4 overflow-y-auto pb-8">
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon-sm" onClick={() => navigate(ROUTE_PATH.SEGMENTS)}>
-          <ArrowLeft className="size-4" />
-        </Button>
-        <h1 className="text-lg font-bold text-secondary">{title}</h1>
-        {readOnly && (
-          <Button variant="outline" size="sm" className="ml-auto" onClick={() => setMode("edit")}>
-            <Pencil className="mr-1.5 size-3.5" /> Chỉnh sửa
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs text-muted-foreground">Nhóm khách hàng / {title}</p>
+          <h1 className="text-2xl font-semibold">{title}</h1>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate(ROUTE_PATH.SEGMENTS)}>
+            <ArrowLeft className="size-4" /> Quay lại
           </Button>
-        )}
+          {readOnly && (
+            <Button onClick={() => setMode("edit")}>
+              <Pencil className="size-4" /> Chỉnh sửa
+            </Button>
+          )}
+        </div>
       </div>
 
-      <div className="max-w-3xl space-y-4">
-        {/* Thông tin chung */}
+      {/* Thông tin chung */}
+      <div className="space-y-4 rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold">Thông tin chung</h2>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="seg-name">
@@ -323,7 +329,12 @@ export default function SegmentEditor() {
             )}
           </div>
         </div>
+      </div>
 
+      <div className="space-y-4 rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold">
+          {readOnly ? "Điều kiện & thành viên" : "Cấu hình nhóm"}
+        </h2>
         {/* Chọn chế độ (radio-card) - chỉ khi sửa/tạo */}
         {!readOnly && (
           <div className="grid gap-2 sm:grid-cols-2">
@@ -546,24 +557,24 @@ export default function SegmentEditor() {
             {errors.manual ? <p className="text-sm text-destructive">{errors.manual}</p> : null}
           </div>
         )}
-
-        {/* Footer actions */}
-        {!readOnly && (
-          <div className="flex justify-end gap-2 border-t border-border pt-4">
-            <Button
-              variant="outline"
-              disabled={saveMutation.isPending}
-              onClick={() => (mode === "edit" ? setMode("view") : navigate(ROUTE_PATH.SEGMENTS))}
-            >
-              Huỷ
-            </Button>
-            <Button onClick={handleSave} disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-              {isCreate ? "Tạo nhóm" : "Lưu thay đổi"}
-            </Button>
-          </div>
-        )}
       </div>
+
+      {/* Footer actions */}
+      {!readOnly && (
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="outline"
+            disabled={saveMutation.isPending}
+            onClick={() => (mode === "edit" ? setMode("view") : navigate(ROUTE_PATH.SEGMENTS))}
+          >
+            Huỷ
+          </Button>
+          <Button onClick={handleSave} disabled={saveMutation.isPending}>
+            {saveMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+            {isCreate ? "Tạo nhóm" : "Lưu thay đổi"}
+          </Button>
+        </div>
+      )}
 
       <SegmentPreviewDialog
         open={!!previewCriteria}

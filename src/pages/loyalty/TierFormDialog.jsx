@@ -73,7 +73,7 @@ export function TierFormDialog({ open, onOpenChange, tier, onSubmit, loading }) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit} className="space-y-4">
           <DialogHeader>
             <DialogTitle>{isEdit ? "Sửa hạng thành viên" : "Thêm hạng thành viên mới"}</DialogTitle>

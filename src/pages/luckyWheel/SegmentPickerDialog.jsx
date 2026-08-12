@@ -52,7 +52,7 @@ export function SegmentPickerDialog({ open, onOpenChange, value = [], onConfirm 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Chọn nhóm khách hàng</DialogTitle>
         </DialogHeader>

@@ -42,7 +42,7 @@ export function SegmentPreviewDialog({ open, onOpenChange, criteria }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[85vh] sm:max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Xem thử khách hàng phù hợp</DialogTitle>
           <DialogDescription>

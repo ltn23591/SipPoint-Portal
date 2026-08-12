@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -23,7 +24,7 @@ import { UNIT_OPTIONS, MATERIAL_STATUS, STATUS_META, TEXT } from "./constants";
 function Field({ label, children }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-muted-foreground">{label}</label>
+      <Label>{label}</Label>
       {children}
     </div>
   );
@@ -118,26 +119,28 @@ export default function InventoryDetail() {
   const statusMeta = material ? STATUS_META[material.status] || STATUS_META[MATERIAL_STATUS.IN_STOCK] : null;
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon-sm" onClick={() => navigate(ROUTE_PATH.INVENTORY)}>
-            <ArrowLeft className="size-4" />
-          </Button>
-          <div>
-            <h1 className="text-xl font-bold text-secondary">{title}</h1>
-            {!isCreate && <p className="text-sm text-muted-foreground">{material?.name}</p>}
-          </div>
+    <div className="flex h-full flex-col gap-4 overflow-y-auto pb-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs text-muted-foreground">
+            {TEXT.pageTitle} / {title}
+          </p>
+          <h1 className="text-2xl font-semibold">{title}</h1>
         </div>
-        {readOnly && (
-          <Button variant="outline" size="sm" onClick={() => setMode("edit")}>
-            <Pencil className="mr-1.5 size-3.5" />
-            {TEXT.edit}
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate(ROUTE_PATH.INVENTORY)}>
+            <ArrowLeft className="size-4" /> {TEXT.back}
           </Button>
-        )}
+          {readOnly && (
+            <Button onClick={() => setMode("edit")}>
+              <Pencil className="size-4" /> {TEXT.edit}
+            </Button>
+          )}
+        </div>
       </div>
 
-      <div className="space-y-5 rounded-xl border bg-card p-6 shadow-sm">
+      <div className="space-y-4 rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold">Thông tin nguyên liệu</h2>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Tên nguyên liệu">
             <Input value={form.name ?? ""} disabled={readOnly} onChange={(e) => set("name", e.target.value)} />

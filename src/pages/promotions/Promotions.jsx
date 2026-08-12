@@ -151,7 +151,7 @@ export default function Promotions() {
       align: "right",
       render: (row) => (
         <span className="text-sm tabular-nums text-muted-foreground">
-          {formatNumber(row.usedCount ?? 0)} / {formatNumber(row.issuedCount ?? 0)} /{" "}
+          {formatNumber((row.usedCount ?? 0) + (row.walletUsedCount ?? 0))} / {formatNumber(row.issuedCount ?? 0)} /{" "}
           {formatNumber(row.usageLimit ?? 0)}
         </span>
       ),

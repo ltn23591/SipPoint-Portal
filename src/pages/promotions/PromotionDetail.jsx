@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -20,7 +21,7 @@ import { PROMO_TYPE, PROMO_TYPE_OPTIONS, TEXT } from "./constants";
 function Field({ label, hint, children }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-muted-foreground">{label}</label>
+      <Label>{label}</Label>
       {children}
       {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
     </div>
@@ -148,26 +149,28 @@ export default function PromotionDetail() {
     mode === "create" ? TEXT.createTitle : readOnly ? TEXT.detailTitle : TEXT.editTitle;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon-sm" onClick={() => navigate(ROUTE_PATH.PROMOTIONS)}>
-            <ArrowLeft className="size-4" />
-          </Button>
-          <div>
-            <h1 className="text-xl font-bold text-secondary">{title}</h1>
-            {!isCreate && <p className="text-sm text-muted-foreground">{form.code}</p>}
-          </div>
+    <div className="flex h-full flex-col gap-4 overflow-y-auto pb-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs text-muted-foreground">
+            {TEXT.pageTitle} / {title}
+          </p>
+          <h1 className="text-2xl font-semibold">{title}</h1>
         </div>
-        {readOnly && (
-          <Button variant="outline" size="sm" onClick={() => setMode("edit")}>
-            <Pencil className="mr-1.5 size-3.5" />
-            {TEXT.edit}
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate(ROUTE_PATH.PROMOTIONS)}>
+            <ArrowLeft className="size-4" /> {TEXT.back}
           </Button>
-        )}
+          {readOnly && (
+            <Button onClick={() => setMode("edit")}>
+              <Pencil className="size-4" /> {TEXT.edit}
+            </Button>
+          )}
+        </div>
       </div>
 
-      <div className="space-y-5 rounded-xl border bg-card p-6 shadow-sm">
+      <div className="space-y-4 rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold">Thông tin chung</h2>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Mã voucher">
             <Input
@@ -224,7 +227,10 @@ export default function PromotionDetail() {
             />
           </Field>
         </div>
+      </div>
 
+      <div className="space-y-4 rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold">Điều kiện & thời gian áp dụng</h2>
         <div className="grid grid-cols-3 gap-4">
           <Field label="Đơn tối thiểu (đ)">
             <Input
