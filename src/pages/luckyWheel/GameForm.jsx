@@ -187,9 +187,10 @@ export default function GameForm() {
   const setDist = (key, patch) =>
     setDistributions((prev) => prev.map((d) => (d.key === key ? { ...d, ...patch } : d)));
 
-  // Chọn ô mặc định: chỉ 1 ô, ép cho phép trúng nhiều lần (là ô dự phòng khi các ô
-  // khác hết kho/trượt xác suất, nên phải luôn trúng được). Loại phần thưởng (quà
-  // tặng/xu/lời chúc) của ô mặc định để admin tự chọn, không ép cố định MESSAGE.
+  // Chọn ô mặc định: chỉ 1 ô, ép cho phép trúng nhiều lần (là ô hứng mọi lượt quay
+  // trượt — khi không rơi vào tỉ lệ % của ô nào khác hoặc ô trúng đã hết kho — nên
+  // phải luôn trúng được). Ô mặc định vẫn có thể được gán tỉ lệ % riêng như mọi ô
+  // khác trong bảng phân bổ bên dưới.
   const chooseDefault = (key) =>
     setRewards((prev) =>
       prev.map((r) =>
@@ -626,7 +627,10 @@ export default function GameForm() {
       <div className="space-y-3 rounded-xl border border-border bg-card p-6">
         <h2 className="text-lg font-semibold">Phân bổ tỉ lệ trúng</h2>
         <p className="text-xs text-muted-foreground">
-          Chia tỉ lệ trúng theo nhóm khách hàng. Bỏ trống toàn bộ = quay theo kho (weighted). Nhóm phải nằm trong danh sách áp dụng ở trên.
+          Chia tỉ lệ trúng theo nhóm khách hàng — mọi ô, kể cả ô mặc định, đều có thể gán tỉ lệ %. Bỏ trống toàn bộ = quay theo
+          kho (weighted). Nhóm phải nằm trong danh sách áp dụng ở trên. Nếu lượt quay không rơi vào tỉ lệ % của ô nào (hoặc ô
+          trúng đã hết số lượng), hệ thống sẽ trả về ô mặc định. Khi một ô hết số lượng, tỉ lệ % cấu hình vẫn giữ nguyên — ô đó
+          chỉ đơn giản là không còn được quay trúng nữa.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -665,13 +669,12 @@ export default function GameForm() {
                       <Select value={String(d.rewardIndex)} disabled={lockConfig} onValueChange={(v) => setDist(d.key, { rewardIndex: v })}>
                         <SelectTrigger><SelectValue placeholder="Chọn ô" /></SelectTrigger>
                         <SelectContent>
-                          {rewards.map((r, i) =>
-                            r.isDefault ? null : (
-                              <SelectItem key={r.key} value={String(i)}>
-                                Ô {i + 1}: {r.displayName || "(chưa đặt tên)"}
-                              </SelectItem>
-                            )
-                          )}
+                          {rewards.map((r, i) => (
+                            <SelectItem key={r.key} value={String(i)}>
+                              Ô {i + 1}: {r.displayName || "(chưa đặt tên)"}
+                              {r.isDefault ? " (Mặc định)" : ""}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </td>
