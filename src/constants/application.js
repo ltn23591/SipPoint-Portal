@@ -210,16 +210,6 @@ export const ACTIVE_STATUS_OPTIONS = Object.entries(ACTIVE_STATUS_LABEL).map(
   ([value, label]) => ({ value, label })
 );
 
-export const SHIFT_STATUS = {
-  OPEN: "OPEN",
-  CLOSED: "CLOSED",
-};
-
-export const SHIFT_STATUS_LABEL = {
-  [SHIFT_STATUS.OPEN]: "Đang mở",
-  [SHIFT_STATUS.CLOSED]: "Đã đóng",
-};
-
 // ─── Vòng quay may mắn (Module 5) ───────────────────────────────────────────
 export const LUCKY_WHEEL_STATUS = {
   DRAFT: "DRAFT",
