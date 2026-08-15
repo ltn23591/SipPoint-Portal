@@ -823,3 +823,4 @@ export const BannerApi = {
     return apiCall(API_METHOD.DELETE, endpoint);
   },
 };
+
