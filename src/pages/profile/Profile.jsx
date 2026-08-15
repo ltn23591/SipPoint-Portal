@@ -6,7 +6,6 @@ import {
   Shield,
   Bell,
   BadgeCheck,
-  KeyRound,
   CalendarDays,
   Clock,
   IdCard,
@@ -119,15 +118,6 @@ export default function Profile() {
                     icon={User}
                     label="Loại tài khoản"
                     value={ACCOUNT_TYPE_LABEL[user?.type] || user?.type}
-                  />
-                  <InfoRow
-                    icon={KeyRound}
-                    label="Xác thực 2 lớp"
-                    value={
-                      <Badge variant={user?.isTwoFactorEnabled ? "success" : "secondary"}>
-                        {user?.isTwoFactorEnabled ? "Đã bật" : "Chưa bật"}
-                      </Badge>
-                    }
                   />
                   <InfoRow
                     icon={CalendarDays}

@@ -589,6 +589,11 @@ export const CampaignApi = {
     const endpoint = `/api/v1/campaigns/${id}/activate`;
     return apiCall(API_METHOD.POST, endpoint);
   },
+  // Báo cáo hiệu quả: đã phát / đã dùng / doanh thu quy đổi.
+  getReport: (id, signal) => {
+    const endpoint = `/api/v1/campaigns/${id}/report`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { signal });
+  },
   // Huỷ chiến dịch đang chạy: thu hồi voucher chưa sử dụng.
   deactivate: (id) => {
     const endpoint = `/api/v1/campaigns/${id}/deactivate`;

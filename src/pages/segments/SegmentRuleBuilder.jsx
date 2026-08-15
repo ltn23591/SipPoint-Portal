@@ -86,31 +86,43 @@ function ConditionRow({ condition, tiers, onChange, onRemove }) {
 
       {/* Value */}
       <div className="flex-1 min-w-[8rem]">
-        {cfg.valueType === "number" &&
-          (condition.operator === "between" ? (
-            <div className="flex items-center gap-1">
-              <Input
-                type="number"
-                placeholder="từ"
-                value={condition.value?.[0] ?? ""}
-                onChange={(e) => setValue([e.target.value, condition.value?.[1] ?? ""])}
-              />
-              <span className="text-muted-foreground">—</span>
-              <Input
-                type="number"
-                placeholder="đến"
-                value={condition.value?.[1] ?? ""}
-                onChange={(e) => setValue([condition.value?.[0] ?? "", e.target.value])}
-              />
-            </div>
-          ) : (
-            <Input
-              type="number"
-              placeholder="giá trị"
-              value={condition.value ?? ""}
-              onChange={(e) => setValue(e.target.value)}
-            />
-          ))}
+        {cfg.valueType === "number" && (
+          <div className="space-y-1">
+            {condition.operator === "between" ? (
+              <div className="flex items-center gap-1">
+                <Input
+                  type="number"
+                  placeholder="từ"
+                  value={condition.value?.[0] ?? ""}
+                  onChange={(e) => setValue([e.target.value, condition.value?.[1] ?? ""])}
+                />
+                <span className="text-muted-foreground">—</span>
+                <Input
+                  type="number"
+                  placeholder="đến"
+                  value={condition.value?.[1] ?? ""}
+                  onChange={(e) => setValue([condition.value?.[0] ?? "", e.target.value])}
+                />
+                {cfg.unit ? (
+                  <span className="shrink-0 text-sm text-muted-foreground">{cfg.unit}</span>
+                ) : null}
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <Input
+                  type="number"
+                  placeholder="giá trị"
+                  value={condition.value ?? ""}
+                  onChange={(e) => setValue(e.target.value)}
+                />
+                {cfg.unit ? (
+                  <span className="shrink-0 text-sm text-muted-foreground">{cfg.unit}</span>
+                ) : null}
+              </div>
+            )}
+            {cfg.hint ? <p className="text-xs text-muted-foreground">{cfg.hint}</p> : null}
+          </div>
+        )}
 
         {cfg.valueType === "enum" && (
           <Select value={condition.value} onValueChange={setValue}>

@@ -328,6 +328,20 @@ export const SEGMENT_FIELDS = {
   hasPhone: { label: "Có số điện thoại", valueType: "boolean", operators: ["eq"] },
   redeemCount: { label: "Số lần đổi quà", valueType: "number", operators: ["eq", "gt", "lt", "between"] },
   orderCount: { label: "Số lần order", valueType: "number", operators: ["eq", "gt", "lt", "between"] },
+  totalSpent: {
+    label: "Tổng chi tiêu",
+    valueType: "number",
+    operators: ["eq", "gt", "lt", "between"],
+    unit: "đ",
+    hint: "Tổng tiền khách đã chi tiêu tích lũy. VD: lớn hơn 5.000.000đ để lọc nhóm VIP.",
+  },
+  lastVisitAt: {
+    label: "Số ngày từ lần ghé cuối",
+    valueType: "number",
+    operators: ["eq", "gt", "lt", "between"],
+    unit: "ngày",
+    hint: "VD: lớn hơn 30 ngày để lọc nhóm win-back. Khách chưa từng ghé không thuộc nhóm này — dùng tiêu chí \"Số lần order bằng 0\".",
+  },
   tier: { label: "Hạng thành viên", valueType: "tier", operators: ["in", "notIn"] },
 };
 
