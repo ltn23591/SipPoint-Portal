@@ -17,11 +17,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { ROLE_LABEL } from "@/constants/application";
 import { ROUTE_PATH } from "@/constants/routePaths";
 
-// Segment → Vietnamese label map
+// Segment → Vietnamese label map. Phải cập nhật mỗi khi thêm route mới trong
+// routePaths.js, nếu không segment gốc (list) sẽ rơi vào nhánh "id động" và hiển thị
+// nhầm thành "Chi tiết" trên breadcrumb (xem useBreadcrumbs bên dưới).
 const SEGMENT_LABEL = {
   dashboard: "Dashboard",
   profile: "Hồ sơ",
   orders: "Đơn hàng",
+  new: "Tạo mới",
   pending: "Chờ xác nhận",
   completed: "Đã hoàn thành",
   cancelled: "Đã huỷ",
@@ -29,38 +32,34 @@ const SEGMENT_LABEL = {
   categories: "Danh mục",
   combo: "Combo",
   price: "Bảng giá",
+  zones: "Khu vực",
   tables: "Bàn & QR",
   qr: "Mã QR",
   map: "Sơ đồ bàn",
   customers: "Khách hàng",
   segments: "Phân khúc",
   history: "Lịch sử",
+  campaigns: "Chiến dịch",
+  create: "Tạo mới",
+  edit: "Chỉnh sửa",
   loyalty: "Hạng thành viên",
   tiers: "Hạng thành viên",
   vouchers: "Voucher",
   events: "Sự kiện",
   staff: "Nhân viên",
   roles: "Phân quyền",
-  shifts: "Ca làm việc",
   reports: "Báo cáo",
   products: "Theo sản phẩm",
   settings: "Cài đặt",
-  payment: "Thanh toán",
+  payments: "Thanh toán",
   print: "In ấn",
   integration: "Tích hợp",
-};
-
-// Root label per top-level segment
-const ROOT_LABEL = {
-  dashboard: "Dashboard",
-  orders: "Đơn hàng",
-  menu: "Thực đơn",
-  tables: "Bàn & QR",
-  customers: "Khách hàng",
-  loyalty: "Hạng thành viên",
-  staff: "Nhân viên",
-  reports: "Báo cáo",
-  settings: "Cài đặt",
+  inventory: "Kho & Nguyên liệu",
+  promotions: "Khuyến mãi",
+  notifications: "Thông báo",
+  "lucky-wheel": "Trò chơi may mắn",
+  "activity-logs": "Nhật ký hoạt động",
+  banners: "Banner quảng cáo",
 };
 
 function useBreadcrumbs() {
