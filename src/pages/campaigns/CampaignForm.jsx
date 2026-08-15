@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatNumber } from "@/helpers/format";
+import { formatNumber, formatPercent, formatVND } from "@/helpers/format";
 import { ROUTE_PATH } from "@/constants/routePaths";
 import { CAMPAIGN_STATUS, CAMPAIGN_STATUS_LABEL } from "@/constants/application";
 import { CampaignApi, CustomerSegmentApi, VoucherApi } from "@/apis";
@@ -41,6 +41,16 @@ const STATUS_BADGE_CLASS = {
   [CAMPAIGN_STATUS.FINISHED]: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
   [CAMPAIGN_STATUS.CANCELLED]: "bg-destructive/10 text-destructive",
 };
+
+function StatCard({ label, value, sub }) {
+  return (
+    <div className="rounded-lg border border-border p-3">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="mt-1 text-xl font-bold text-foreground">{value}</p>
+      {sub ? <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p> : null}
+    </div>
+  );
+}
 
 export default function CampaignForm() {
   const { id } = useParams();
@@ -78,6 +88,23 @@ export default function CampaignForm() {
   });
 
   const isReadOnly = isEdit && campaign?.status && campaign.status !== CAMPAIGN_STATUS.DRAFT;
+
+  // Chiến dịch nháp chưa phát voucher nên chưa có gì để báo cáo
+  const showReport = isEdit && !!campaign?.status && campaign.status !== CAMPAIGN_STATUS.DRAFT;
+
+  const {
+    data: report,
+    isLoading: isReportLoading,
+    error: reportError,
+  } = useQuery({
+    queryKey: ["campaign-report", id],
+    enabled: showReport,
+    queryFn: async ({ signal }) => {
+      const res = await CampaignApi.getReport(id, signal);
+      if (!res?.data?.success) throw new Error(res?.data?.message || "Không tải được báo cáo chiến dịch.");
+      return res.data.data;
+    },
+  });
 
   useEffect(() => {
     if (!campaign) return;
@@ -192,16 +219,48 @@ export default function CampaignForm() {
         </div>
       </div>
 
-      {isEdit && campaign?.issuedCount != null && (
-        <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">
-            Đã phát <strong className="text-foreground">{formatNumber(campaign.issuedCount ?? 0)}</strong> voucher
-            {campaign.voucherId?.code ? (
-              <>
-                {" "}(mã <span className="font-mono">{campaign.voucherId.code}</span>)
-              </>
+      {showReport && (
+        <div className="space-y-3 rounded-xl border border-border bg-card p-6">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">Hiệu quả chiến dịch</h2>
+            {campaign?.voucherId?.code ? (
+              <span className="text-sm text-muted-foreground">
+                Mã voucher <span className="font-mono text-foreground">{campaign.voucherId.code}</span>
+              </span>
             ) : null}
-          </p>
+          </div>
+
+          {isReportLoading ? (
+            <p className="text-sm text-muted-foreground">Đang tải số liệu…</p>
+          ) : reportError ? (
+            <p className="text-sm text-destructive">{reportError.message}</p>
+          ) : (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <StatCard label="Đã phát" value={formatNumber(report?.issued ?? 0)} sub="voucher vào ví khách" />
+                <StatCard
+                  label="Đã dùng"
+                  value={formatNumber(report?.used ?? 0)}
+                  sub={`Tỉ lệ sử dụng ${formatPercent(report?.usageRate ?? 0)}`}
+                />
+                <StatCard
+                  label="Doanh thu quy đổi"
+                  value={formatVND(report?.revenue ?? 0)}
+                  sub={`${formatNumber(report?.orderCount ?? 0)} đơn đã hoàn thành`}
+                />
+                <StatCard
+                  label="Giá trị đơn TB"
+                  value={formatVND(report?.avgOrderValue ?? 0)}
+                  sub={`Đã giảm ${formatVND(report?.discountGiven ?? 0)}`}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Còn {formatNumber(report?.unused ?? 0)} voucher chưa dùng
+                {report?.expired ? <> (trong đó {formatNumber(report.expired)} đã quá hạn)</> : null}. Doanh thu chỉ
+                tính các đơn ở trạng thái hoàn thành; đơn bị huỷ hoặc hoàn trả đã được trả voucher về ví.
+              </p>
+            </>
+          )}
         </div>
       )}
 
