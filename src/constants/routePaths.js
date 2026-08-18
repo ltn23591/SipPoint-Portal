@@ -22,6 +22,8 @@ export const ROUTE_PATH = {
   CUSTOMERS: "/customers",
   CUSTOMER_DETAIL: "/customers/:id",
 
+  TRANSACTIONS: "/transactions",
+
   SEGMENTS: "/segments",
   SEGMENT_DETAIL: "/segments/:id",
   CAMPAIGNS: "/campaigns",

@@ -213,6 +213,11 @@ export const OrdersApi = {
     const endpoint = `/api/v1/orders/${id}/refund`;
     return apiCall(API_METHOD.POST, endpoint, payload);
   },
+  // Tổng quan thống kê tài chính & giao dịch tiền
+  getPaymentSummary: (params, signal) => {
+    const endpoint = `/api/v1/orders/payment-summary`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
 };
 
 // Trò chơi may mắn (REST số nhiều: /api/v1/games).
@@ -342,6 +347,11 @@ export const CustomersApi = {
   // Admin: lịch sử điểm đầy đủ (phân trang) của khách hàng.
   getPointHistory: (id, params, signal) => {
     const endpoint = `/api/v1/customers/${id}/point-history`;
+    return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
+  },
+  // Admin: toàn bộ lịch sử giao dịch điểm toàn hệ thống.
+  getAllPointHistories: (params, signal) => {
+    const endpoint = `/api/v1/customers/point-history/all`;
     return apiCall(API_METHOD.GET, endpoint, null, null, null, { params, signal });
   },
 };

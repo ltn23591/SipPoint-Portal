@@ -41,6 +41,7 @@ export const MENU_ITEMS = [
 
   { type: "header", key: "grp-crm", label: "CRM & Marketing" },
   { key: "customers", label: "Khách hàng", icon: Users, path: ROUTE_PATH.CUSTOMERS, permission: "manage_customers" },
+  { key: "transactions", label: "Lịch sử giao dịch", icon: History, path: ROUTE_PATH.TRANSACTIONS, permission: "manage_customers" },
   { key: "segments", label: "Nhóm khách hàng", icon: UsersRound, path: ROUTE_PATH.SEGMENTS, permission: "manage_customers" },
   { key: "campaigns", label: "Chiến dịch", icon: Megaphone, path: ROUTE_PATH.CAMPAIGNS, permission: "manage_promotions" },
   { key: "loyalty", label: "Hạng thành viên", icon: Crown, path: ROUTE_PATH.LOYALTY, permission: "manage_promotions" },

@@ -263,9 +263,6 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }) {
                 </span>
               </div>
             </div>
-
-            {/* Hoàn trả: chỉ đơn đã hoàn tất mới trừ lại điểm được */}
-            {order.status === ORDER_STATUS.COMPLETED && <RefundSection orderId={orderId} />}
           </div>
         )}
       </DialogContent>

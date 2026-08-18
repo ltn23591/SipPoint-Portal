@@ -27,6 +27,7 @@ import GameDetail from "@/pages/luckyWheel/GameDetail";
 import Tables from "@/pages/tables/Tables";
 import Customers from "@/pages/customers/Customers";
 import CustomerDetail from "@/pages/customers/CustomerDetail";
+import Transactions from "@/pages/transactions/Transactions";
 import Segments from "@/pages/segments/Segments";
 import SegmentEditor from "@/pages/segments/SegmentEditor";
 import Campaigns from "@/pages/campaigns/Campaigns";
@@ -77,6 +78,7 @@ export const router = createBrowserRouter([
 
       { path: ROUTE_PATH.CUSTOMERS, element: <Customers /> },
       { path: ROUTE_PATH.CUSTOMER_DETAIL, element: <CustomerDetail /> },
+      { path: ROUTE_PATH.TRANSACTIONS, element: <Transactions /> },
 
       { path: ROUTE_PATH.SEGMENTS, element: <Segments /> },
       { path: ROUTE_PATH.SEGMENT_DETAIL, element: <SegmentEditor /> },

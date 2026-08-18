@@ -1,4 +1,5 @@
-import { Download, Plus } from "lucide-react";
+import { Download, Plus, History } from "lucide-react";
+import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -8,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ORDER_STATUS_OPTIONS } from "@/constants/application";
+import { ROUTE_PATH } from "@/constants/routePaths";
 import { DATE_FILTER_OPTIONS, TABLE_FILTER_OPTIONS, TEXT } from "../constants";
 
 const STATUS_FILTER_OPTIONS = [
@@ -16,6 +18,7 @@ const STATUS_FILTER_OPTIONS = [
 ];
 
 export function OrderFilters({ filters, onFiltersChange, onNewOrder }) {
+  const navigate = useNavigate();
   const set = (key) => (val) => onFiltersChange({ ...filters, [key]: val });
 
   return (
@@ -74,6 +77,15 @@ export function OrderFilters({ filters, onFiltersChange, onNewOrder }) {
         <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
           <Download className="size-3.5" />
           {TEXT.exportReport}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5 text-xs"
+          onClick={() => navigate(ROUTE_PATH.TRANSACTIONS)}
+        >
+          <History className="size-3.5" />
+          Lịch sử giao dịch
         </Button>
         <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={onNewOrder}>
           <Plus className="size-3.5" />
