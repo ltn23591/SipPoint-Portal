@@ -16,7 +16,7 @@
 
 ### 1. 📈 Dashboard Realtime & Phân tích Doanh thu
 - **Thống kê tổng quan**: Theo dõi Doanh thu, Tổng đơn hàng, Khách hàng mới và Tỷ lệ chuyển đổi theo ngày/tuần/tháng.
-- **Biểu đồ trực quan**: Tích hợp **Recharts** vẽ biểu đồ doanh thu theo khung giờ, top 5 món bán chạy nhất và tỷ lệ phương thức thanh toán (VietQR vs Tiền mặt).
+- **Biểu đồ trực quan**: Tích hợp **Recharts** vẽ biểu đồ doanh thu theo khung giờ, top 5 món bán chạy nhất và tỷ lệ phương thức thanh toán (Chuyển khoản vs Tiền mặt).
 
 ### 2. 🛒 POS & Quản lý Đơn hàng Kanban
 - **Màn hình POS Thu ngân**: Tạo đơn nhanh chóng, chọn khu vực/bàn, áp mã giảm giá và tùy chọn hình thức Ăn tại chỗ / Mang về / Giao hàng.
