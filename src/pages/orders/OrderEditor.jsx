@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -27,6 +27,48 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { ROUTE_PATH } from "@/constants/routePaths";
 import { ORDER_TYPE } from "@/constants/application";
 import { CategoryApi, ProductsApi, VoucherApi, OrdersApi } from "@/apis";
+
+function ItemQuantityInput({ value, onChange }) {
+  const [val, setVal] = useState(String(value));
+
+  useEffect(() => {
+    setVal(String(value));
+  }, [value]);
+
+  const handleBlur = () => {
+    let parsed = parseInt(val, 10);
+    if (isNaN(parsed) || parsed < 1) parsed = 1;
+    setVal(String(parsed));
+    if (parsed !== value) onChange(parsed);
+  };
+
+  const handleChange = (e) => {
+    const inputVal = e.target.value;
+    setVal(inputVal);
+    const parsed = parseInt(inputVal, 10);
+    if (!isNaN(parsed) && parsed >= 1) {
+      onChange(parsed);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.target.blur();
+    }
+  };
+
+  return (
+    <input
+      type="number"
+      min={1}
+      value={val}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      className="h-6 w-10 rounded border border-input bg-background p-0 text-center text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+    />
+  );
+}
 
 const ALL_CATEGORY = "all";
 
@@ -107,6 +149,14 @@ export default function OrderEditor() {
       const qty = next[idx].qty + delta;
       if (qty <= 0) return next.filter((_, i) => i !== idx);
       next[idx] = { ...next[idx], qty };
+      return next;
+    });
+
+  const setQtyDirect = (idx, newQty) =>
+    setItems((prev) => {
+      const next = [...prev];
+      if (newQty <= 0) return next.filter((_, i) => i !== idx);
+      next[idx] = { ...next[idx], qty: newQty };
       return next;
     });
 
@@ -332,7 +382,10 @@ export default function OrderEditor() {
                     >
                       <Minus className="size-3" />
                     </Button>
-                    <span className="w-6 text-center text-sm font-medium">{it.qty}</span>
+                    <ItemQuantityInput
+                      value={it.qty}
+                      onChange={(newQty) => setQtyDirect(idx, newQty)}
+                    />
                     <Button
                       variant="outline"
                       size="icon-sm"
