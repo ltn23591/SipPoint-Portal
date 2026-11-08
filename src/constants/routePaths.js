@@ -60,5 +60,7 @@ export const ROUTE_PATH = {
 
   BANNERS: "/banners",
 
+  REVIEWS: "/reviews",
+
   NOT_FOUND: "*",
 };

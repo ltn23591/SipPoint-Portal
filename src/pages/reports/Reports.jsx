@@ -24,6 +24,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/common/StatCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -63,6 +64,7 @@ const getPresetDates = (preset) => {
 };
 
 export default function Reports() {
+  const [activeTab, setActiveTab] = useState("revenue");
   const [preset, setPreset] = useState("7d");
   const initialRange = useMemo(() => getPresetDates("7d"), []);
   const [startDate, setStartDate] = useState(initialRange.startDate);
@@ -250,131 +252,142 @@ export default function Reports() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          icon={DollarSign}
-          label="Doanh thu hoàn tất"
-          value={formatVND(summary.totalRevenue)}
-        />
-        <StatCard
-          icon={ShoppingBag}
-          label="Số đơn hoàn tất"
-          value={formatNumber(summary.completedOrders)}
-        />
-        <StatCard
-          icon={Receipt}
-          label="TB / đơn"
-          value={formatVND(summary.avgOrderValue)}
-        />
-        <StatCard
-          icon={CheckCircle2}
-          label="Đơn đã thanh toán"
-          value={formatNumber(summary.paidOrdersCount)}
-        />
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="revenue">Doanh thu & Sản phẩm bán chạy</TabsTrigger>
+          <TabsTrigger value="inventory">Kho & Tiêu hao nguyên liệu</TabsTrigger>
+        </TabsList>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Diễn biến doanh thu theo ngày</CardTitle>
-          </CardHeader>
-          <CardContent className="h-64 pr-2">
-            {isRevenueLoading ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                Đang tải dữ liệu doanh thu...
-              </div>
-            ) : chartData.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                Chưa có dữ liệu doanh thu trong khoảng thời gian này.
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} barCategoryGap={24}>
-                  <defs>
-                    <linearGradient id="reportRevenueBar" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(38 92% 60%)" />
-                      <stop offset="100%" stopColor="hsl(38 92% 45%)" />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis
-                    dataKey="day"
-                    tickLine={false}
-                    axisLine={false}
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-                  />
-                  <YAxis
-                    tickFormatter={(v) =>
-                      v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}tr` : `${v / 1000}k`
-                    }
-                    tickLine={false}
-                    axisLine={false}
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-                  />
-                  <Tooltip
-                    cursor={{ fill: "hsl(var(--muted) / 0.4)" }}
-                    contentStyle={{
-                      borderRadius: 10,
-                      border: "1px solid hsl(var(--border))",
-                      background: "hsl(var(--popover))",
-                      color: "hsl(var(--popover-foreground))",
-                      fontSize: 12,
-                    }}
-                    formatter={(value) => [formatVND(value), "Doanh thu"]}
-                    labelFormatter={(label) => `Ngày ${label}`}
-                  />
-                  <Bar
-                    dataKey="value"
-                    fill="url(#reportRevenueBar)"
-                    radius={[8, 8, 0, 0]}
-                    maxBarSize={42}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+        <TabsContent value="revenue" className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              icon={DollarSign}
+              label="Doanh thu hoàn tất"
+              value={formatVND(summary.totalRevenue)}
+            />
+            <StatCard
+              icon={ShoppingBag}
+              label="Số đơn hoàn tất"
+              value={formatNumber(summary.completedOrders)}
+            />
+            <StatCard
+              icon={Receipt}
+              label="TB / đơn"
+              value={formatVND(summary.avgOrderValue)}
+            />
+            <StatCard
+              icon={CheckCircle2}
+              label="Đơn đã thanh toán"
+              value={formatNumber(summary.paidOrdersCount)}
+            />
+          </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Sản phẩm bán chạy</CardTitle>
-          </CardHeader>
-          <CardContent className="px-0 pb-0">
-            {isTopLoading ? (
-              <p className="px-6 py-8 text-center text-sm text-muted-foreground">
-                Đang tải sản phẩm bán chạy...
-              </p>
-            ) : topProducts.length === 0 ? (
-              <p className="px-6 py-8 text-center text-sm text-muted-foreground">
-                Chưa có sản phẩm bán ra trong khoảng thời gian này.
-              </p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="pl-6">Sản phẩm</TableHead>
-                    <TableHead className="text-right">Số lượng</TableHead>
-                    <TableHead className="pr-6 text-right">Doanh thu</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {topProducts.map((p) => (
-                    <TableRow key={p._id || p.name}>
-                      <TableCell className="pl-6 font-medium">{p.name}</TableCell>
-                      <TableCell className="text-right">{formatNumber(p.qty)}</TableCell>
-                      <TableCell className="pr-6 text-right font-medium">
-                        {formatVND(p.revenue)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Diễn biến doanh thu theo ngày</CardTitle>
+              </CardHeader>
+              <CardContent className="h-64 pr-2">
+                {isRevenueLoading ? (
+                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                    Đang tải dữ liệu doanh thu...
+                  </div>
+                ) : chartData.length === 0 ? (
+                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                    Chưa có dữ liệu doanh thu trong khoảng thời gian này.
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} barCategoryGap={24}>
+                      <defs>
+                        <linearGradient id="reportRevenueBar" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(38 92% 60%)" />
+                          <stop offset="100%" stopColor="hsl(38 92% 45%)" />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                      <XAxis
+                        dataKey="day"
+                        tickLine={false}
+                        axisLine={false}
+                        tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                      />
+                      <YAxis
+                        tickFormatter={(v) =>
+                          v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}tr` : `${v / 1000}k`
+                        }
+                        tickLine={false}
+                        axisLine={false}
+                        tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                      />
+                      <Tooltip
+                        cursor={{ fill: "hsl(var(--muted) / 0.4)" }}
+                        contentStyle={{
+                          borderRadius: 10,
+                          border: "1px solid hsl(var(--border))",
+                          background: "hsl(var(--popover))",
+                          color: "hsl(var(--popover-foreground))",
+                          fontSize: 12,
+                        }}
+                        formatter={(value) => [formatVND(value), "Doanh thu"]}
+                        labelFormatter={(label) => `Ngày ${label}`}
+                      />
+                      <Bar
+                        dataKey="value"
+                        fill="url(#reportRevenueBar)"
+                        radius={[8, 8, 0, 0]}
+                        maxBarSize={42}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
 
-      <InventoryReport />
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Sản phẩm bán chạy</CardTitle>
+              </CardHeader>
+              <CardContent className="px-0 pb-0">
+                {isTopLoading ? (
+                  <p className="px-6 py-8 text-center text-sm text-muted-foreground">
+                    Đang tải sản phẩm bán chạy...
+                  </p>
+                ) : topProducts.length === 0 ? (
+                  <p className="px-6 py-8 text-center text-sm text-muted-foreground">
+                    Chưa có sản phẩm bán ra trong khoảng thời gian này.
+                  </p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="pl-6">Sản phẩm</TableHead>
+                        <TableHead className="text-right">Số lượng</TableHead>
+                        <TableHead className="pr-6 text-right">Doanh thu</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {topProducts.map((p) => (
+                        <TableRow key={p._id || p.name}>
+                          <TableCell className="pl-6 font-medium">{p.name}</TableCell>
+                          <TableCell className="text-right">{formatNumber(p.qty)}</TableCell>
+                          <TableCell className="pr-6 text-right font-medium">
+                            {formatVND(p.revenue)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="inventory" className="space-y-6">
+          <InventoryReport queryParams={queryParams} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Download, Plus, History } from "lucide-react";
+import { ChefHat, Download, History, Kanban, Plus } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +17,13 @@ const STATUS_FILTER_OPTIONS = [
   ...ORDER_STATUS_OPTIONS,
 ];
 
-export function OrderFilters({ filters, onFiltersChange, onNewOrder }) {
+export function OrderFilters({
+  filters,
+  onFiltersChange,
+  onNewOrder,
+  viewMode = "kanban",
+  onViewModeChange,
+}) {
   const navigate = useNavigate();
   const set = (key) => (val) => onFiltersChange({ ...filters, [key]: val });
 
@@ -73,7 +79,31 @@ export function OrderFilters({ filters, onFiltersChange, onNewOrder }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        {onViewModeChange && (
+          <div className="flex items-center rounded-lg border bg-muted/40 p-0.5">
+            <Button
+              type="button"
+              size="sm"
+              variant={viewMode === "kanban" ? "default" : "ghost"}
+              className="h-7 gap-1.5 px-2.5 text-xs"
+              onClick={() => onViewModeChange("kanban")}
+            >
+              <Kanban className="size-3.5" />
+              Kanban
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={viewMode === "kds" ? "default" : "ghost"}
+              className="h-7 gap-1.5 px-2.5 text-xs"
+              onClick={() => onViewModeChange("kds")}
+            >
+              <ChefHat className="size-3.5" />
+              Màn hình KDS (Pha chế)
+            </Button>
+          </div>
+        )}
         <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
           <Download className="size-3.5" />
           {TEXT.exportReport}

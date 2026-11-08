@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { OrderFilters } from "./components/OrderFilters";
 import { OrderKanban } from "./components/OrderKanban";
+import { BaristaKdsView } from "./components/BaristaKdsView";
 import { OrderDetailDialog } from "./components/OrderDetailDialog";
 import { getDateRange, parseOrderList } from "./helpers";
 import { OrdersApi, StoreApi } from "@/apis";
@@ -19,6 +20,7 @@ export default function Orders() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [viewMode, setViewMode] = useState("kanban");
   const [detailId, setDetailId] = useState(null);
 
   useQuery({
@@ -83,6 +85,8 @@ export default function Orders() {
         filters={filters}
         onFiltersChange={setFilters}
         onNewOrder={() => navigate(ROUTE_PATH.ORDER_NEW)}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       {isError ? (
@@ -93,6 +97,12 @@ export default function Orders() {
         <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
           Đang tải đơn hàng...
         </div>
+      ) : viewMode === "kds" ? (
+        <BaristaKdsView
+          orders={filteredOrders}
+          onStatusChange={(id, status, reason) => statusMutation.mutate({ id, status, reason })}
+          onView={(order) => setDetailId(order._id)}
+        />
       ) : (
         <OrderKanban
           orders={filteredOrders}

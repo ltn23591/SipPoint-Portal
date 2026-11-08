@@ -29,21 +29,21 @@ import { cn } from "@/lib/utils";
 import { ReportApi } from "@/apis";
 import { STATUS_META, MATERIAL_STATUS } from "@/pages/inventory/constants";
 
-export function InventoryReport() {
+export function InventoryReport({ queryParams = {} }) {
   const [exporting, setExporting] = useState(false);
 
   const { data: dashboard } = useQuery({
     queryKey: ["inventory-dashboard"],
     queryFn: async () => {
       const res = await ReportApi.inventoryDashboard();
-      return res?.data?.success ? res.data.data : null;
+      return res?.data?.success ? res.data.data : res?.data?.data || null;
     },
   });
 
   const { data: series = [], isLoading: seriesLoading } = useQuery({
-    queryKey: ["material-consumption-series"],
+    queryKey: ["material-consumption-series", queryParams],
     queryFn: async () => {
-      const res = await ReportApi.materialConsumptionSeries();
+      const res = await ReportApi.materialConsumptionSeries(queryParams);
       const raw = res?.data?.data || [];
       return raw.map((item) => ({
         day: item._id ? item._id.slice(5) : "",
@@ -52,12 +52,20 @@ export function InventoryReport() {
     },
   });
 
+  const { data: consumptionRows = [], isLoading: consumptionLoading } = useQuery({
+    queryKey: ["material-consumption", queryParams],
+    queryFn: async () => {
+      const res = await ReportApi.materialConsumption(queryParams);
+      return res?.data?.data || [];
+    },
+  });
+
   const lowStockList = dashboard?.lowStockList || [];
 
   const handleExport = async () => {
     setExporting(true);
     try {
-      const res = await ReportApi.exportMaterialConsumption();
+      const res = await ReportApi.exportMaterialConsumption(queryParams);
       if (!res?.data || res.data.size === 0) throw new Error("Không có dữ liệu để xuất.");
       const url = URL.createObjectURL(new Blob([res.data]));
       const a = document.createElement("a");
@@ -67,7 +75,7 @@ export function InventoryReport() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      toast.success("Đã xuất báo cáo tiêu hao.");
+      toast.success("Đã xuất báo cáo tiêu hao nguyên liệu.");
     } catch (err) {
       toast.error(err.message || "Xuất báo cáo thất bại.");
     } finally {
@@ -78,7 +86,7 @@ export function InventoryReport() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-secondary">Tồn kho & Nguyên liệu</h2>
+        <h2 className="text-lg font-semibold text-secondary">Báo cáo Kho & Tiêu hao nguyên liệu</h2>
         <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
           {exporting ? (
             <Loader2 className="mr-1.5 size-4 animate-spin" />
@@ -90,17 +98,17 @@ export function InventoryReport() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Wallet} label="Giá trị tồn" value={formatVND(dashboard?.stockValue || 0)} />
-        <StatCard icon={Boxes} label="Số nguyên liệu" value={formatNumber(dashboard?.totalMaterials || 0)} />
+        <StatCard icon={Wallet} label="Tổng giá trị tồn kho" value={formatVND(dashboard?.stockValue || 0)} />
+        <StatCard icon={Boxes} label="Tổng số nguyên liệu" value={formatNumber(dashboard?.totalMaterials || 0)} />
         <StatCard
           icon={AlertTriangle}
-          label="Sắp hết"
+          label="Nguyên liệu sắp hết"
           value={formatNumber(dashboard?.lowCount || 0)}
           iconClassName="bg-amber-500/10 text-amber-600 dark:text-amber-400"
         />
         <StatCard
           icon={XCircle}
-          label="Hết hàng"
+          label="Nguyên liệu hết hàng"
           value={formatNumber(dashboard?.outCount || 0)}
           iconClassName="bg-destructive/10 text-destructive"
         />
@@ -109,7 +117,7 @@ export function InventoryReport() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Tiêu hao nguyên liệu theo ngày</CardTitle>
+            <CardTitle className="text-base">Biểu đồ tiêu hao nguyên liệu theo ngày</CardTitle>
           </CardHeader>
           <CardContent className="h-64 pr-2">
             {seriesLoading ? (
@@ -118,7 +126,7 @@ export function InventoryReport() {
               </div>
             ) : series.length === 0 ? (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                Chưa có dữ liệu tiêu hao.
+                Chưa có dữ liệu tiêu hao trong khoảng thời gian này.
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -162,20 +170,20 @@ export function InventoryReport() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Nguyên liệu cần nhập thêm</CardTitle>
+            <CardTitle className="text-base">Danh sách nguyên liệu cần nhập thêm</CardTitle>
           </CardHeader>
           <CardContent className="px-0 pb-0">
             {lowStockList.length === 0 ? (
               <p className="px-6 py-8 text-center text-sm text-muted-foreground">
-                Tất cả nguyên liệu đang đủ tồn. 🎉
+                Tất cả nguyên liệu đang đủ định mức tồn kho. 🎉
               </p>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="pl-6">Nguyên liệu</TableHead>
-                    <TableHead className="text-right">Tồn</TableHead>
-                    <TableHead className="text-right">Ngưỡng</TableHead>
+                    <TableHead className="text-right">Tồn hiện tại</TableHead>
+                    <TableHead className="text-right">Ngưỡng tối thiểu</TableHead>
                     <TableHead className="pr-6">Trạng thái</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -203,6 +211,69 @@ export function InventoryReport() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            Chi tiết Nhập – Xuất – Tồn theo từng nguyên liệu
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-0 pb-0">
+          {consumptionLoading ? (
+            <p className="px-6 py-8 text-center text-sm text-muted-foreground">
+              Đang tải bảng tổng hợp tiêu hao nguyên liệu...
+            </p>
+          ) : consumptionRows.length === 0 ? (
+            <p className="px-6 py-8 text-center text-sm text-muted-foreground">
+              Chưa có dữ liệu nguyên liệu.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="pl-6">Nguyên liệu</TableHead>
+                  <TableHead>Đơn vị</TableHead>
+                  <TableHead className="text-right">Đã nhập</TableHead>
+                  <TableHead className="text-right">Đã tiêu hao</TableHead>
+                  <TableHead className="text-right">Tồn hiện tại</TableHead>
+                  <TableHead className="text-right">Giá vốn / ĐV</TableHead>
+                  <TableHead className="text-right">Giá trị tồn</TableHead>
+                  <TableHead className="pr-6">Trạng thái</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {consumptionRows.map((row) => {
+                  const meta = STATUS_META[row.status] || STATUS_META[MATERIAL_STATUS.IN_STOCK];
+                  return (
+                    <TableRow key={row.materialId || row.name}>
+                      <TableCell className="pl-6 font-medium">{row.name}</TableCell>
+                      <TableCell className="text-muted-foreground">{row.unit}</TableCell>
+                      <TableCell className="text-right text-emerald-600 font-medium">
+                        +{formatNumber(row.imported || 0)}
+                      </TableCell>
+                      <TableCell className="text-right text-amber-600 font-medium">
+                        -{formatNumber(row.consumed || 0)}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {formatNumber(row.onHand || 0)}
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        {formatVND(row.cost || 0)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatVND(row.stockValue || 0)}
+                      </TableCell>
+                      <TableCell className="pr-6">
+                        <Badge className={cn(meta.className)}>{meta.label}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -60,6 +60,7 @@ const SEGMENT_LABEL = {
   "lucky-wheel": "Trò chơi may mắn",
   "activity-logs": "Nhật ký hoạt động",
   banners: "Banner quảng cáo",
+  reviews: "Đánh giá & Phản hồi",
 };
 
 function useBreadcrumbs() {

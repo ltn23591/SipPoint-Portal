@@ -101,6 +101,30 @@ export const SocketProvider = ({ children }) => {
       queryClient.invalidateQueries({ queryKey: ["materials"] });
     });
 
+    // Khách tại bàn bấm nút Gọi nhân viên / Yêu cầu hỗ trợ
+    socketInstance.on("table_assistance_requested", (payload) => {
+      console.log("🔔 [Socket.io] Table assistance requested:", payload);
+      playChime();
+      const tableTitle = payload?.tableName ? `Bàn ${payload.tableName}` : "Khách tại bàn";
+      const zonePart = payload?.zoneName ? ` (${payload.zoneName})` : "";
+      const notePart = payload?.note ? ` — Ghi chú: "${payload.note}"` : "";
+      toast.warning(`🔔 ${tableTitle}${zonePart}: ${payload?.requestLabel || "Cần hỗ trợ"}`, {
+        description: `Yêu cầu lúc ${new Date(payload?.createdAt || Date.now()).toLocaleTimeString("vi-VN")}${notePart}`,
+        duration: 12000,
+      });
+    });
+
+    // Khách hàng vừa gửi đánh giá đơn hàng mới
+    socketInstance.on("feedback_created", (feedback) => {
+      console.log("🔔 [Socket.io] New feedback created:", feedback);
+      const code = feedback?.orderId?.code ? `#${feedback.orderId.code}` : "";
+      toast.success(`⭐ Đánh giá mới (${feedback?.rating || 5}/5 sao) ${code}`, {
+        description: feedback?.comment || `Khách hàng: ${feedback?.customerName || "Khách lẻ"}`,
+        duration: 6000,
+      });
+      queryClient.invalidateQueries({ queryKey: ["feedbacks"] });
+    });
+
     socketInstance.on("disconnect", () => {
       console.log("🔌 [Socket.io] Disconnected from server");
     });
@@ -112,6 +136,8 @@ export const SocketProvider = ({ children }) => {
       socketInstance.off("table_updated");
       socketInstance.off("low_stock");
       socketInstance.off("product_out_of_stock");
+      socketInstance.off("table_assistance_requested");
+      socketInstance.off("feedback_created");
       socketInstance.off("disconnect");
     };
   }, [socketInstance, playChime]);
