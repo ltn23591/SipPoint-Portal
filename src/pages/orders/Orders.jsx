@@ -7,7 +7,7 @@ import { OrderFilters } from "./components/OrderFilters";
 import { OrderKanban } from "./components/OrderKanban";
 import { OrderDetailDialog } from "./components/OrderDetailDialog";
 import { getDateRange, parseOrderList } from "./helpers";
-import { OrdersApi } from "@/apis";
+import { OrdersApi, StoreApi } from "@/apis";
 import { ORDER_STATUS_LABEL, ORDER_TYPE } from "@/constants/application";
 import { ROUTE_PATH } from "@/constants/routePaths";
 
@@ -20,6 +20,15 @@ export default function Orders() {
   const qc = useQueryClient();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [detailId, setDetailId] = useState(null);
+
+  useQuery({
+    queryKey: ["store-config"],
+    queryFn: async () => {
+      const res = await StoreApi.getConfig();
+      return res?.data?.data || res?.data || {};
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const params = useMemo(() => {
     const { startDate, endDate } = getDateRange(filters.date);
@@ -38,7 +47,7 @@ export default function Orders() {
     placeholderData: keepPreviousData,
   });
 
-  const orders = data?.list ?? [];
+  const orders = useMemo(() => data?.list ?? [], [data?.list]);
 
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {

@@ -22,7 +22,8 @@ import {
   ORDER_TYPE_LABEL,
   DATE_TIME_FORMAT,
 } from "@/constants/application";
-import { OrdersApi } from "@/apis";
+import { OrdersApi, StoreApi } from "@/apis";
+import { useAuthStore } from "@/stores/authStore";
 import { normalizeOrder } from "../helpers";
 
 const STATUS_BADGE_CLASS = {
@@ -52,6 +53,9 @@ function RefundSection({ orderId }) {
       toast.success(res?.message || "Đã hoàn trả đơn hàng.");
       qc.invalidateQueries({ queryKey: ["orders"] });
       qc.invalidateQueries({ queryKey: ["order-detail", orderId] });
+      qc.invalidateQueries({ queryKey: ["payment-transactions"] });
+      qc.invalidateQueries({ queryKey: ["payment-summary"] });
+      qc.invalidateQueries({ queryKey: ["report-dashboard"] });
       setExpanded(false);
       setReason("");
     },
@@ -119,6 +123,19 @@ function InfoRow({ icon: Icon, label, children }) {
 }
 
 export function OrderDetailDialog({ orderId, open, onOpenChange }) {
+  const user = useAuthStore((s) => s.user);
+  const roleCode = (user?.roleId?.code || user?.role || "").toLowerCase();
+  const canRefund = !user || roleCode === "admin" || roleCode === "cashier";
+
+  const { data: storeConfig } = useQuery({
+    queryKey: ["store-config"],
+    enabled: open,
+    queryFn: async () => {
+      const res = await StoreApi.getConfig();
+      return res?.data?.data || res?.data || {};
+    },
+  });
+
   const { data: order, isLoading, isError } = useQuery({
     queryKey: ["order-detail", orderId],
     enabled: open && !!orderId,
@@ -155,7 +172,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }) {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => printReceipt(order)}
+              onClick={() => printReceipt(order, storeConfig)}
               className="gap-1.5 shrink-0"
             >
               <Printer className="size-4" />
@@ -263,6 +280,10 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }) {
                 </span>
               </div>
             </div>
+
+            {order.status === ORDER_STATUS.COMPLETED && canRefund && (
+              <RefundSection orderId={order._id} />
+            )}
           </div>
         )}
       </DialogContent>

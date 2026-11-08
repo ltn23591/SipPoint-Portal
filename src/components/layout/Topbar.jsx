@@ -1,7 +1,7 @@
 import { Bell, ChevronDown, ChevronRight, Home, LogOut, Settings, User } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Link, useLocation, useMatches, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -64,7 +64,6 @@ const SEGMENT_LABEL = {
 
 function useBreadcrumbs() {
   const location = useLocation();
-  const matches = useMatches();
 
   const segments = location.pathname.replace(/^\//, "").split("/").filter(Boolean);
   if (segments.length === 0) return [];
@@ -109,7 +108,7 @@ export function Topbar() {
         <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
           <Home className="size-3.5" />
         </Link>
-        {breadcrumbs.map((crumb, i) => (
+        {breadcrumbs.map((crumb) => (
           <span key={crumb.path} className="flex items-center gap-1">
             <ChevronRight className="size-3 text-muted-foreground/60" />
             {crumb.active ? (

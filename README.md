@@ -6,7 +6,7 @@
 [![Shadcn UI](https://img.shields.io/badge/Shadcn_UI-Components-000000?style=for-the-badge&logo=shadcnui&logoColor=white)](https://ui.shadcn.com/)
 [![React Router](https://img.shields.io/badge/React_Router-v7-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white)](https://reactrouter.com/)
 [![Recharts](https://img.shields.io/badge/Recharts-Data_Viz-22B5BF?style=for-the-badge)](https://recharts.org/)
-[![SheetJS](https://img.shields.io/badge/SheetJS-Excel_Export-1F7237?style=for-the-badge)](https://sheetjs.com/)
+[![ExcelJS](https://img.shields.io/badge/Excel_Export-Backend_ExcelJS-1F7237?style=for-the-badge)](https://vercel.com/)
 [![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
 
 **SipPoint-Portal** là Hệ thống Quản trị & Vận hành Cửa hàng toàn diện phục vụ cho Chủ chuỗi, Quản lý cửa hàng, Thu ngân và Nhân viên Pha chế của chuỗi **SipPoint Coffee & Tea**. Tích hợp màn hình POS bán hàng, quản lý đơn hàng Kanban thời gian thực, in hóa đơn nhiệt 80mm, quản lý kho nguyên liệu và CRM / Marketing tập trung.
@@ -44,11 +44,11 @@ flowchart LR
 ## 🚀 2. Phân tích Chi tiết 25+ Phân hệ & Trang Quản trị
 
 ### 📈 2.1. Dashboard Realtime & Phân tích Doanh thu (`pages/dashboard`)
-- **KPI Metrics tổng quan**: Thống kê doanh thu theo ngày, số lượng đơn hàng, số khách hàng mới và giá trị trung bình đơn (AOV).
+- **KPI Metrics tổng quan**: Thống kê doanh thu theo ngày, số lượng đơn hàng hôm nay và số lượng khách hàng mới trong ngày.
 - **Biểu đồ trực quan Recharts**:
-  - Biểu đồ đường (Line chart) diễn biến doanh thu theo khung giờ trong ngày.
-  - Biểu đồ cột (Bar chart) Top 5 sản phẩm bán chạy nhất.
-  - Biểu đồ tròn (Pie chart) tỷ lệ phương thức thanh toán (`CASH` vs `TRANSFER`).
+  - Biểu đồ cột (Bar chart) diễn biến doanh thu theo ngày.
+  - Thanh tiến độ Top 5 sản phẩm bán chạy nhất.
+  - Danh sách đơn hàng cập nhật thời gian thực.
 
 ### 🛒 2.2. POS Thu ngân & Bảng Kanban Đơn hàng (`pages/orders`)
 - **Màn hình POS Đặt món**:
@@ -84,10 +84,11 @@ flowchart LR
 - **Quản lý Tài khoản Nhân viên**: Tạo tài khoản cho nhân viên thu ngân, pha chế, phục vụ.
 - **Phân quyền theo Vai trò (RBAC)**: Phân quyền truy cập theo vai trò (`ADMIN`, `MANAGER`, `CASHIER`, `BARISTA`, `STAFF`), kiểm soát chặt chẽ quyền xem/sửa/xóa.
 
-### 📑 2.7. Ca làm việc, Nhật ký & Báo cáo Excel (`pages/activityLogs`, `pages/reports`, `pages/shifts`, `pages/transactions`)
-- **Quản lý Ca làm (Shift Management)**: Khởi tạo ca, nhập số tiền két ban đầu, chốt két cuối ca, thống kê tổng tiền mặt và tiền chuyển khoản thu được.
-- **Nhật ký Hoạt động (Activity Logs)**: Ghi lại toàn bộ thao tác hệ thống của nhân viên (tạo đơn, hủy đơn, sửa giá, chốt ca...).
-- **Báo cáo & Xuất file Excel (SheetJS / XLSX)**: Xuất báo cáo doanh thu, lịch sử đơn hàng, dữ liệu ca làm ra file Excel `.xlsx` chỉ với 1 click.
+### 📑 2.7. Nhật ký, Báo cáo Excel & Cài đặt (`pages/activityLogs`, `pages/reports`, `pages/settings`, `pages/transactions`)
+- **Nhật ký Hoạt động (Activity Logs)**: Ghi lại toàn bộ thao tác hệ thống của nhân viên (đăng nhập, sửa cấu hình, hoàn trả...).
+- **Lịch sử Giao dịch & Thanh toán (`pages/payments`, `pages/transactions`)**: Theo dõi đối soát doanh thu Tiền mặt / Chuyển khoản QR, lịch sử điểm thưởng và cấu hình phương thức thanh toán.
+- **Báo cáo & Xuất file Excel**: Hiển thị biểu đồ doanh thu, top sản phẩm bán chạy, tồn kho/tiêu hao nguyên liệu và tải về file `.xlsx` được xuất từ Backend (`ExcelJS`).
+- **Cài đặt Cửa hàng (`pages/settings`)**: Quản lý tập trung thông tin cửa hàng, mã số thuế, VAT, giờ hoạt động và thông tin Wi-Fi in trên hóa đơn nhiệt 80mm.
 
 ---
 
@@ -122,14 +123,13 @@ SipPoint-Portal/
 │   │   ├── payments/       # Quản lý giao dịch thanh toán
 │   │   ├── profile/        # Hồ sơ tài khoản nhân viên
 │   │   ├── promotions/     # Mã giảm giá Voucher
-│   │   ├── reports/        # Báo cáo doanh thu & Xuất Excel
-│   │   ├── reviews/        # Đánh giá của khách hàng
+│   │   ├── reports/        # Báo cáo doanh thu, tồn kho & Xuất Excel
 │   │   ├── roles/          # Phân quyền vai trò RBAC
 │   │   ├── segments/       # Phân khúc khách hàng tự động
 │   │   ├── settings/       # Cài đặt cửa hàng
 │   │   ├── staff/          # Quản lý tài khoản Nhân viên
 │   │   ├── tables/         # Quản lý danh sách Bàn
-│   │   ├── transactions/   # Lịch sử biến động giao dịch SePay
+│   │   ├── transactions/   # Lịch sử giao dịch điểm khách hàng
 │   │   └── zones/          # Quản lý Khu vực cửa hàng
 │   ├── routes/             # Client Routing setup & Protected Route logic
 │   ├── stores/             # Zustand State Stores (Auth, POS Store)
@@ -148,9 +148,9 @@ SipPoint-Portal/
 
 - **Core Framework**: React 19, Vite 8 (JavaScript).
 - **UI Design System**: TailwindCSS v4, Shadcn UI, Radix UI primitives, Lucide Icons.
-- **Biểu đồ & Báo cáo**: **Recharts** (Visual data charts) & **SheetJS (xlsx)** (Xuất Excel).
+- **Biểu đồ & Báo cáo**: **Recharts** (Visual data charts) & xuất file Excel qua Backend API (**ExcelJS**).
 - **State Management**: **Zustand** & **TanStack Query (React Query v5)**.
-- **Real-time WebSockets**: Socket.io-client.
+- **Real-time WebSockets**: Socket.io-client + Web Audio API notification chime.
 - **Notifications**: Sonner Toast.
 
 ---

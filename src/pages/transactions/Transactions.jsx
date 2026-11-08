@@ -73,7 +73,7 @@ export default function Transactions() {
     placeholderData: keepPreviousData,
   });
 
-  const transactions = data?.list ?? [];
+  const transactions = useMemo(() => data?.list ?? [], [data?.list]);
   const total = data?.total ?? 0;
 
   // Tính thống kê nhanh của trang hiện tại
@@ -91,7 +91,7 @@ export default function Transactions() {
           totalMoney += money;
         }
       } else if (tx.transactionType === "ORDER") {
-        const match = tx.description?.match(/(\d+[\d\.]*)\s*đ/i);
+        const match = tx.description?.match(/(\d+[\d.]*)\s*đ/i);
         if (match) {
           const rawNum = parseInt(match[1].replace(/\./g, ""), 10);
           if (!isNaN(rawNum)) totalMoney += rawNum;
@@ -187,7 +187,7 @@ export default function Transactions() {
           }
         }
         if (t.transactionType === "ORDER") {
-          const match = t.description?.match(/(\d+[\d\.]*)\s*đ/i);
+          const match = t.description?.match(/(\d+[\d.]*)\s*đ/i);
           if (match) {
             return <span className="font-bold text-foreground">{match[1]} đ</span>;
           }

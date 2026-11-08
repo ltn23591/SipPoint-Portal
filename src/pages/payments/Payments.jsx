@@ -12,7 +12,6 @@ import {
   Filter,
   Calendar,
   Eye,
-  ShoppingBag,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";

@@ -1,8 +1,17 @@
 import { formatVND, formatDate } from "@/helpers/format";
 import { DATE_TIME_FORMAT } from "@/constants/application";
+import { queryClient } from "@/helpers/queryClient";
 
-export function printReceipt(order) {
+export function printReceipt(order, storeConfig) {
   if (!order) return;
+
+  const store = storeConfig || queryClient?.getQueryData(["store-config"]) || {};
+  const storeName = store.name || "SIPPOINT COFFEE";
+  const storeAddress = store.address || "123 Đường Cà Phê, Quận 1, TP.HCM";
+  const storePhone = store.phone || "0123 456 789";
+  const storeTaxCode = store.taxCode || "";
+  const wifiName = store.wifiName || "SipPoint_Guest";
+  const wifiPassword = store.wifiPassword || "sippoint888";
 
   const printWindow = window.open("", "_blank", "width=400,height=600");
   if (!printWindow) {
@@ -13,7 +22,6 @@ export function printReceipt(order) {
   const itemsHtml = (order.items || []).map((it) => {
     const name = it.name || it.productId?.name || "Món ăn";
     const qty = it.qty || 1;
-    const price = formatVND(it.unitPrice || it.price || (it.lineTotal ? it.lineTotal / qty : 0));
     const total = formatVND(it.lineTotal || (it.unitPrice || it.price || 0) * qty);
     const variants = (it.variants || []).map((v) => v.name).join(", ");
     const note = it.note ? `<div style="font-size: 11px; font-style: italic; color: #555;">✍️ ${it.note}</div>` : "";
@@ -60,9 +68,10 @@ export function printReceipt(order) {
       </head>
       <body>
         <div class="header text-center">
-          <h2>SIPPOINT COFFEE</h2>
-          <p>ĐC: 123 Đường Cà Phê, Quận 1, TP.HCM</p>
-          <p>Hotline: 0123 456 789</p>
+          <h2>${storeName}</h2>
+          <p>ĐC: ${storeAddress}</p>
+          <p>Hotline: ${storePhone}</p>
+          ${storeTaxCode ? `<p>MST: ${storeTaxCode}</p>` : ""}
         </div>
 
         <div class="divider"></div>
@@ -121,7 +130,7 @@ export function printReceipt(order) {
 
         <div class="footer text-center">
           <p class="bold">CẢM ƠN QUÝ KHÁCH & HẸN GẶP LẠI!</p>
-          <p style="font-style: italic; color: #444;">Wifi: SipPoint_Guest / Pass: sippoint888</p>
+          ${wifiName ? `<p style="font-style: italic; color: #444;">Wifi: ${wifiName}${wifiPassword ? ` / Pass: ${wifiPassword}` : ""}</p>` : ""}
         </div>
 
         <script>

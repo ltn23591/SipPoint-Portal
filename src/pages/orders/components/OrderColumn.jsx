@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { TEXT } from "../constants";
 import { OrderCard } from "./OrderCard";
 
-export function OrderColumn({ status, dotClass, label, orders, onStatusChange, onView, onEdit }) {
+export function OrderColumn({ dotClass, label, orders, onStatusChange, onView, onEdit }) {
   return (
     <div className="flex min-w-[220px] max-w-[260px] flex-1 flex-col gap-3">
       <div className="flex items-center gap-2">
